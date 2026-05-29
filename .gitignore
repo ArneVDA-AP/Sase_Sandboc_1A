@@ -1,0 +1,32 @@
+# Secrets
+*.key
+*.pem
+*.secret
+.env
+setup-keys.txt
+*client_secret*
+*tsig*
+*TSIG*
+
+# OPNsense raw config (voor sanitize)
+*.raw
+
+# Disk images
+*.qcow2
+*.iso
+*.img
+
+# OS/editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Logs
+*.log
+
+# Tijdelijke bestanden
+/tmp/
+
+# .gitkeep bestanden niet verbergen
+!.gitkeep

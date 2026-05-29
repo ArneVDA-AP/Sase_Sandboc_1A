@@ -1,0 +1,8 @@
+function FindProxyForURL(url, host) {
+    if (isPlainHostName(host)) return "DIRECT";
+    if (shExpMatch(host, "10.*")) return "DIRECT";
+    if (shExpMatch(host, "100.64.*")) return "DIRECT";
+    if (shExpMatch(host, "127.*")) return "DIRECT";
+    if (shExpMatch(host, "*.sandbox.local")) return "DIRECT";
+    return "PROXY 100.70.154.79:3128";
+}

@@ -1,0 +1,35 @@
+set interfaces ethernet eth0 address '192.168.122.33/24'
+set interfaces ethernet eth0 description 'WAN'
+set interfaces ethernet eth0 hw-id '0c:8f:b4:84:00:00'
+set interfaces ethernet eth0 offload gro
+set interfaces ethernet eth1 address '172.16.10.1/24'
+set interfaces ethernet eth1 description 'Site-LAN'
+set interfaces ethernet eth1 hw-id '0c:8f:b4:84:00:01'
+set interfaces ethernet eth1 offload gro
+set interfaces loopback lo
+set protocols static route 0.0.0.0/0 next-hop 192.168.122.1
+set protocols static route 0.0.0.0/0 next-hop 192.169.122.1
+set service ntp allow-client address '127.0.0.0/8'
+set service ntp allow-client address '169.254.0.0/16'
+set service ntp allow-client address '10.0.0.0/8'
+set service ntp allow-client address '172.16.0.0/12'
+set service ntp allow-client address '192.168.0.0/16'
+set service ntp allow-client address '::1/128'
+set service ntp allow-client address 'fe80::/10'
+set service ntp allow-client address 'fc00::/7'
+set service ntp server time1.vyos.net
+set service ntp server time2.vyos.net
+set service ntp server time3.vyos.net
+set service ssh listen-address '0.0.0.0'
+set service ssh port '22'
+set system config-management commit-revisions '100'
+set system console device ttyS0 speed '115200'
+set system host-name 'site01'
+set system login operator-group default command-policy allow '*'
+set system login user vyos authentication encrypted-password '$6$rounds=656000$bw1gSB1c35vFzeII$7L3NEKi2kbCwmoDJnC5k5jWXB69dRHsl9rEf2ApmTUFy9qPmGRJ8zvpN3.Cn3snUjmAFAFTciMxC.1L4nEWAt0'
+set system login user vyos authentication plaintext-password ''
+set system name-server '8.8.8.8'
+set system name-server '8.8.4.4'
+set system option reboot-on-upgrade-failure '5'
+set system syslog local facility all level 'info'
+set system syslog local facility local7 level 'debug'

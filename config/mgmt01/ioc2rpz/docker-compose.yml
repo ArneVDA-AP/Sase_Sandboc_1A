@@ -1,0 +1,29 @@
+services:
+  ioc2rpz:
+    image: pvmdel/ioc2rpz
+    ports:
+      - "192.168.122.23:53:53/udp"
+      - "192.168.122.23:53:53/tcp"
+      - "192.168.122.23:853:853/tcp"
+      - "192.168.122.23:8443:8443/tcp"
+    volumes:
+      - ./cfg:/opt/ioc2rpz/cfg
+      - ./db:/opt/ioc2rpz/db
+    restart: always
+    logging:
+      driver: syslog
+    depends_on:
+      - ioc2rpz-gui
+
+  ioc2rpz-gui:
+    image: pvmdel/ioc2rpz.gui
+    ports:
+      - "192.168.122.23:8080:80/tcp"
+      - "192.168.122.23:8444:443/tcp"
+    volumes:
+      - ./cfg:/opt/ioc2rpz.gui/export-cfg
+      - ./db:/opt/ioc2rpz.gui/www/io2cfg
+      - ./ssl:/etc/apache2/ssl
+    restart: always
+    logging:
+      driver: syslog
