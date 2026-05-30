@@ -95,6 +95,10 @@ docs/
 Types: `feat`, `fix`, `config`, `docs`, `refactor`, `test`
 Scopes: `pop01`, `mgmt01`, `site01`, `netbird`, `sitepc01`, `docs`, `dlp-icap`
 
+## Revovery & backups
+
+De repo bevat de config-bron (Zitadel action-scripts) en documentatie. De live state van Entra, de Zitadel-DB en de NetBird-DB zit **niet** in git en vereist aparte backup. Zie [`RECOVERY.md`](./RECOVERY.md).
+
 ## Documentatie
 
 - **Wiki:** [arnevda-ap.github.io/sase-poc-wiki](https://arnevda-ap.github.io/sase-poc-wiki) — runbooks, component docs, beslissingsverantwoordingen, bevindingen
