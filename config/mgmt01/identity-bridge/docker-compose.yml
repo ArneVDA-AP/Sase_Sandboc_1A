@@ -1,0 +1,23 @@
+services:
+  identity-bridge:
+    build: .
+    container_name: identity-bridge
+    # Host-port binding op het mgmt-LAN: alleen bereikbaar vanaf pop01 via
+    # 192.168.122.23, niet 0.0.0.0. De Squid-helper bevraagt deze poort.
+    ports:
+      - "192.168.122.23:8088:8088"
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - default                 # host-port-binding leeft hier
+      - netbird-deploy_netbird   # voor http://management:80/api
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  netbird-deploy_netbird:
+    external: true
