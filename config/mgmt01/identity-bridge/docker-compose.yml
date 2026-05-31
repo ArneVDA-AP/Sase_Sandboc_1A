@@ -12,6 +12,7 @@ services:
     networks:
       - default                 # host-port-binding leeft hier
       - netbird-deploy_netbird   # voor http://management:80/api
+      - sase-internal
     logging:
       driver: json-file
       options:
@@ -20,4 +21,6 @@ services:
 
 networks:
   netbird-deploy_netbird:
+    external: true
+  sase-internal:
     external: true
