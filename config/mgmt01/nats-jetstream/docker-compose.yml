@@ -1,0 +1,34 @@
+services:
+  nats:
+    image: nats:2.14.1-alpine
+    container_name: nats-jetstream
+    command: ["-c", "/etc/nats/nats.conf"]
+    env_file:
+      - .env
+    ports:
+      - "192.168.122.23:4222:4222"
+      - "127.0.0.1:8222:8222"
+    volumes:
+      - ./nats.conf:/etc/nats/nats.conf:ro
+      - nats-data:/data
+    restart: unless-stopped
+    mem_limit: 512m
+    networks:
+      - sase-internal
+
+  nats-box:
+    image: natsio/nats-box:0.19.5
+    container_name: nats-cli
+    depends_on: [nats]
+    entrypoint: /bin/sh
+    tty: true
+    networks:
+      - sase-internal
+    profiles: [tools]
+
+networks:
+  sase-internal:
+    external: true
+
+volumes:
+  nats-data:
