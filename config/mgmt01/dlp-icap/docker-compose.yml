@@ -4,6 +4,12 @@ services:
     container_name: dlp_icap
     ports:
       - 1345:1345
+    networks:
+      - sase-internal
+    environment:
+      - NATS_URL=nats://nats:4222
+      - NATS_USER=mgmt01-pub
+      - NATS_PASS=${NATS_MGMT01_PASS}
     restart: unless-stopped
     logging:
       driver: json-file
@@ -16,3 +22,6 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+networks:
+  sase-internal:
+    external: true
