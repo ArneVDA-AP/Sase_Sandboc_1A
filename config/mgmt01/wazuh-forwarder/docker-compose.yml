@@ -1,0 +1,27 @@
+# NATS -> Wazuh forwarder (transport C: localfile NDJSON tail).
+# Eigen compose-project (zoals dlp-icap). Deelt met de Wazuh-manager ENKEL het
+# externe volume wazuh_nats_ingest (geen netwerk) en met NATS het externe
+# netwerk sase-internal. Secret via .env-interpolatie (host-lokaal uit
+# /opt/nats-jetstream/.env), niet gecommit.
+services:
+  wazuh-forwarder:
+    build: .
+    container_name: wazuh-forwarder
+    restart: unless-stopped
+    environment:
+      NATS_URL: nats://nats:4222
+      NATS_USER: wazuh-forwarder
+      NATS_PASS: ${NATS_WAZUH_PASS}
+      OUT_PATH: /ingest/security_alerts.json
+    networks:
+      - sase-internal
+    volumes:
+      - wazuh_nats_ingest:/ingest
+
+networks:
+  sase-internal:
+    external: true
+
+volumes:
+  wazuh_nats_ingest:
+    external: true
