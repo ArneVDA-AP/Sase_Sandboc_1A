@@ -1,0 +1,21 @@
+services:
+  control-daemon:
+    build: .
+    container_name: control-daemon
+    env_file: .env
+    restart: unless-stopped
+    networks:
+      - sase-internal
+
+  # redis-session: uncomment ALLEEN als er nog geen redis-session container draait
+  # op sase-internal. Check eerst: docker ps --format '{{.Names}}' | grep redis-session
+  # redis-session:
+  #   image: redis:7-alpine
+  #   container_name: redis-session
+  #   restart: unless-stopped
+  #   networks:
+  #     - sase-internal
+
+networks:
+  sase-internal:
+    external: true
