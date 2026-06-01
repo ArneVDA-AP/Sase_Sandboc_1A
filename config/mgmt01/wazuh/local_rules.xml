@@ -1,0 +1,68 @@
+<!--
+  SASE PoC - custom rules voor de NATS-bus events (transport C, localfile JSON).
+  Verslag 37. Rule-ID's 100500+ (100100-100499 = systeem/NetBird-pipeline;
+  CASB Laag 2 / M365 hangt hier in S5 een laag op via if_sid > 100400).
+
+  Veldnamen tegen de ECHTE wazuh-logtest decoder-output gevalideerd, niet aangenomen:
+    - user        -> dstuser        (JSON-decoder remapt deze sleutel)
+    - src_ip/dest_ip -> letterlijk   (geen remap; sleutel != srcip/dstip)
+    - alert.*     -> dot-flattened   (alert.signature_id, alert.severity, ...)
+    - violations[] -> string         (array NIET gerecurseerd -> geen violations.severity)
+    - producer    -> letterlijk      (routing-anker, NIET het subject)
+-->
+<group name="sase,nats,">
+
+  <!-- 100500 base anchor: elk bus-event met een bekende producer. level 0 = geen eigen alert,
+       enkel om de producer-kinderen op te hangen (if_sid). -->
+  <rule id="100500" level="0">
+    <decoded_as>json</decoded_as>
+    <field name="producer" type="pcre2">^(suricata|squid|dlp|c-icap)$</field>
+    <description>SASE NATS bus event</description>
+  </rule>
+
+  <!-- ===== SWG / Squid proxy deny (policy-block, routine SWG-werking) ===== -->
+  <rule id="100501" level="5">
+    <if_sid>100500</if_sid>
+    <field name="producer">^squid$</field>
+    <description>SWG: proxy deny $(url) (user: $(dstuser))</description>
+    <group>sase_swg,proxy_deny,</group>
+  </rule>
+
+  <!-- ===== IDS / Suricata. LET OP: alert.severity is OMGEKEERD (1=ernstigst .. 3=laag) ===== -->
+  <rule id="100510" level="6">
+    <if_sid>100500</if_sid>
+    <field name="producer">^suricata$</field>
+    <description>IDS: Suricata alert - $(alert.signature)</description>
+    <group>sase_ids,</group>
+  </rule>
+  <rule id="100511" level="10">
+    <if_sid>100510</if_sid>
+    <field name="alert.severity">^1$</field>
+    <description>IDS: Suricata HIGH severity - $(alert.signature)</description>
+    <group>sase_ids,</group>
+  </rule>
+  <rule id="100513" level="3">
+    <if_sid>100510</if_sid>
+    <field name="alert.severity">^3$</field>
+    <description>IDS: Suricata LOW/info - $(alert.signature)</description>
+    <group>sase_ids,</group>
+  </rule>
+
+  <!-- ===== DLP. violations[] landt als string -> producer-match volstaat.
+       Per-severity-DLP zou een custom decoder/pcre op de string vergen (gedocumenteerde keuze). ===== -->
+  <rule id="100520" level="10">
+    <if_sid>100500</if_sid>
+    <field name="producer">^dlp$</field>
+    <description>DLP: data-loss-overtreding van $(client_ip) - $(violations)</description>
+    <group>sase_dlp,</group>
+  </rule>
+
+  <!-- ===== Malware / c-icap RESPMOD (ClamAV) - hoogste level ===== -->
+  <rule id="100530" level="12">
+    <if_sid>100500</if_sid>
+    <field name="producer" type="pcre2">^c-icap$</field>
+    <description>Malware: $(signature) geblokkeerd voor $(client_ip)</description>
+    <group>sase_malware,</group>
+  </rule>
+
+</group>
