@@ -1,0 +1,6 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+nats-py==2.9.0
+redis==5.2.1
+httpx==0.28.1
+aiosqlite==0.20.0
