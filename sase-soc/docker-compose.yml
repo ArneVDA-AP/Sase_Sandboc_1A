@@ -1,0 +1,16 @@
+services:
+  soc-dashboard:
+    build: .
+    container_name: sase-soc-dashboard
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - sase-internal
+    ports:
+      - "0.0.0.0:8090:8090"   # Fase 1: bereikbaar voor test; Fase 3: achter Caddy/SNI
+    volumes:
+      - ./data:/data           # SQLite 30-dagen store
+
+networks:
+  sase-internal:
+    external: true             # bestaand netwerk; niets gewijzigd
