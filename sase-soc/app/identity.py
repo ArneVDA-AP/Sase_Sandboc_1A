@@ -1,54 +1,21 @@
 """
-Identiteits-resolver: overlay-IP -> {user, name, persona, groups}.
+Identiteitsresolver: overlay-IP -> {user, name, persona, groups}.
 
-Bron: de bestaande identity-bridge op :8088, endpoint GET /lookup?ip=<ip>.
-We weten zeker dat dit endpoint bestaat (recon D: 422 'ip field required').
-De exacte JSON-veldnamen kennen we nog niet 100% -> daarom DEFENSIEF: we proberen
-meerdere gangbare sleutels en loggen de ruwe respons 1x zodat we kunnen finetunen.
+Bron: identity-bridge /lookup?ip=<ip> met header X-Bridge-Secret.
+Exacte responsstructuur (uit identity-bridge/app/main.py):
+  {"status":"OK","user":"email@domain","groups":["Docenten","Core-Services"],"os":"linux"}
 
-Read-only HTTP GET. Cache met korte TTL (= de eigen refresh-interval van de bridge).
-Faalt nooit hard: bij error/onbekend valt het terug op het IP zelf.
+Persona = de eerste groep uit de config NETBIRD_POLICY_GROUPS die in de groepen zit.
 """
 import logging
 import time
-from typing import Any, Optional
+from typing import Optional
 
 import httpx
 
 from app import config
 
 log = logging.getLogger("soc.identity")
-
-# Kandidaat-veldnamen (defensief; we finetunen na de eerste echte lookup).
-_USER_KEYS = ("user", "email", "upn", "user_id", "username", "userId")
-_NAME_KEYS = ("name", "peer_name", "hostname", "peer", "host")
-_PERSONA_KEYS = ("persona", "personas")
-_GROUP_KEYS = ("groups", "group")
-_PEERID_KEYS = ("peer_id", "id", "peerId")
-
-
-def _first(d: dict, keys) -> Optional[Any]:
-    for k in keys:
-        if k in d and d[k] not in (None, "", []):
-            return d[k]
-    return None
-
-
-def _as_persona(raw_persona, raw_groups) -> Optional[str]:
-    """Persona is bij voorkeur de expliciete persona; anders de policy-groep."""
-    def pick(val):
-        if isinstance(val, list):
-            # eerste persona-groep die een policy-groep is, anders de eerste
-            for g in val:
-                gn = g.get("name") if isinstance(g, dict) else g
-                if gn in config.NETBIRD_POLICY_GROUPS:
-                    return gn
-            if val:
-                g0 = val[0]
-                return g0.get("name") if isinstance(g0, dict) else g0
-            return None
-        return val
-    return pick(raw_persona) or pick(raw_groups)
 
 
 class IdentityResolver:
@@ -58,7 +25,15 @@ class IdentityResolver:
         self._logged_shape = False
 
     async def start(self) -> None:
-        self._client = httpx.AsyncClient(timeout=4.0)
+        headers = {}
+        if config.IDENTITY_BRIDGE_SECRET:
+            headers["X-Bridge-Secret"] = config.IDENTITY_BRIDGE_SECRET
+        else:
+            log.warning("IDENTITY_BRIDGE_SECRET niet ingesteld — /lookup geeft 401")
+        self._client = httpx.AsyncClient(
+            timeout=4.0,
+            headers=headers,
+        )
 
     async def stop(self) -> None:
         if self._client:
@@ -72,7 +47,7 @@ class IdentityResolver:
             return {"ok": False, "error": str(e)}
 
     async def resolve(self, ip: Optional[str]) -> dict:
-        """Geef {ip, user, name, persona, groups, peer_id, display} terug."""
+        """Geeft {ip, user, name, persona, groups, display} terug."""
         if not ip:
             return self._blank(ip)
         now = time.time()
@@ -81,65 +56,73 @@ class IdentityResolver:
             return hit[1]
 
         rec = self._blank(ip)
+        if not config.IDENTITY_BRIDGE_SECRET:
+            # Geen secret → sla lookup over, cache kort
+            self._cache[ip] = (now, rec)
+            return rec
+
         try:
             r = await self._client.get(
-                f"{config.IDENTITY_BRIDGE_URL}/lookup", params={"ip": ip}
+                f"{config.IDENTITY_BRIDGE_URL}/lookup",
+                params={"ip": ip},
             )
             if r.status_code == 200:
                 data = r.json()
                 if not self._logged_shape:
-                    log.info("identity-bridge /lookup vorm (1x): %s", data)
+                    log.info("identity-bridge /lookup (1x): %s", data)
                     self._logged_shape = True
-                # de respons kan {..} of {"result": {..}} / {"identity": {..}} zijn
-                body = data
-                if isinstance(data, dict):
-                    for wrap in ("result", "identity", "peer", "data"):
-                        if isinstance(data.get(wrap), dict):
-                            body = data[wrap]
-                            break
-                if isinstance(body, dict):
-                    groups = _first(body, _GROUP_KEYS)
-                    personas = _first(body, _PERSONA_KEYS)
+                if data.get("status") == "OK":
+                    groups = data.get("groups") or []   # list van strings
+                    persona = self._pick_persona(groups)
+                    user = data.get("user") or ip
                     rec = {
-                        "ip": ip,
-                        "user": _first(body, _USER_KEYS),
-                        "name": _first(body, _NAME_KEYS),
-                        "persona": _as_persona(personas, groups),
-                        "groups": groups,
-                        "peer_id": _first(body, _PEERID_KEYS),
+                        "ip":      ip,
+                        "user":    user,
+                        "name":    data.get("name"),
+                        "os":      data.get("os"),
+                        "groups":  groups,
+                        "persona": persona,
+                        "peer_id": None,
                     }
-            # 404 = onbekend IP -> blijft blank (kort cachen om hammeren te vermijden)
+            elif r.status_code == 401:
+                log.warning("identity-bridge 401 voor %s — X-Bridge-Secret fout?", ip)
         except Exception as e:  # noqa: BLE001
-            log.debug("lookup faalde voor %s: %s", ip, e)
+            log.debug("lookup fout voor %s: %s", ip, e)
 
         rec["display"] = self._display(rec)
         self._cache[ip] = (now, rec)
         return rec
 
-    def _blank(self, ip: Optional[str]) -> dict:
-        return {"ip": ip, "user": None, "name": None, "persona": None,
-                "groups": None, "peer_id": None, "display": ip or "?"}
+    @staticmethod
+    def _pick_persona(groups: list) -> Optional[str]:
+        """Eerste persona-groep (Studenten/Docenten/Admins) die in de groepen zit."""
+        policy_set = set(config.NETBIRD_POLICY_GROUPS)
+        for g in groups:
+            name = g.get("name") if isinstance(g, dict) else g
+            if name in policy_set:
+                return name
+        return None
 
     @staticmethod
     def _display(rec: dict) -> str:
-        """Naam-boven-IP: 'Docent_1 · Docenten' > naam > user > IP."""
-        user = rec.get("user")
-        name = rec.get("name")
+        """Naam-boven-IP: 'Docent_1 · Docenten' > user > IP."""
+        user    = rec.get("user")
         persona = rec.get("persona")
-        label = None
-        if user:
-            # toon korte vorm vóór de @ als het een email is
-            label = user.split("@")[0] if isinstance(user, str) and "@" in user else user
-        elif name:
-            label = name
+        if user and "@" in str(user):
+            label = user.split("@")[0]
+        elif user:
+            label = str(user)
+        else:
+            label = rec.get("name")
         if label and persona:
             return f"{label} · {persona}"
         return label or rec.get("ip") or "?"
 
+    def _blank(self, ip: Optional[str]) -> dict:
+        return {"ip": ip, "user": None, "name": None, "os": None,
+                "groups": None, "persona": None, "peer_id": None,
+                "display": ip or "?"}
+
     def peer_id_index(self) -> dict[str, str]:
-        """peer_id -> display, opgebouwd uit de cache (voor quarantaine-join)."""
-        out = {}
-        for _, rec in self._cache.values():
-            if rec.get("peer_id"):
-                out[rec["peer_id"]] = rec.get("display", rec.get("ip"))
-        return out
+        return {rec.get("peer_id"): rec.get("display", rec.get("ip"))
+                for _, rec in self._cache.values() if rec.get("peer_id")}
