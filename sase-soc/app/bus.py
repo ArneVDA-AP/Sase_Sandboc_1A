@@ -1,7 +1,8 @@
 """
-NATS JetStream ordered consumer — levert ALLE bestaande events (replay)
-gevolgd door live events. Replay gaat alleen naar SQLite, niet naar WS
-(voorkomt browser-flood). Zodra num_pending==0 → live mode → WS push.
+NATS JetStream subscribe — replay + live.
+Geen ordered_consumer (want dat vereist $js.fc.* publish-recht die de
+daemon-account niet heeft). In plaats daarvan: expliciet ConsumerConfig
+met deliver_policy=ALL + ack_policy=NONE + geen flow control.
 """
 import asyncio
 import logging
@@ -9,17 +10,25 @@ from typing import Callable, Optional
 
 import nats
 from nats.aio.client import Client as NATS
+from nats.js.api import ConsumerConfig, DeliverPolicy, AckPolicy
 
 from app import config
 
 log = logging.getLogger("soc.bus")
+
+# ConsumerConfig zonder flow_control of idle_heartbeat:
+# -> geen $js.fc.* publish nodig -> werkt met daemon-account
+_REPLAY_CFG = ConsumerConfig(
+    deliver_policy=DeliverPolicy.ALL,
+    ack_policy=AckPolicy.NONE,
+)
 
 
 class Bus:
     def __init__(self) -> None:
         self._nc: Optional[NATS] = None
         self._connected = False
-        self._live = False            # True zodra replay klaar is
+        self._live = False
         self._on_replay_done: Optional[Callable] = None
 
     @property
@@ -60,14 +69,13 @@ class Bus:
 
         js = self._nc.jetstream()
 
-        # ── SECURITY_ALERTS: ordered consumer levert replay + live ──────
         async def _sec_handler(msg):
             is_replay = not self._live
             try:
                 await on_event(msg.subject, msg.data, is_replay=is_replay)
             except Exception as exc:  # noqa: BLE001
                 log.warning("sec-handler fout: %s", exc)
-            # Detecteer einde replay
+            # Detecteer einde replay via num_pending metadata
             if not self._live:
                 try:
                     if msg.metadata.num_pending == 0:
@@ -78,7 +86,6 @@ class Bus:
                 except Exception:  # noqa: BLE001
                     pass
 
-        # ── IDENTITY_EVENTS: altijd live verwerkt (pre-warms resolver) ──
         async def _id_handler(msg):
             try:
                 await on_event(msg.subject, msg.data, is_replay=False)
@@ -86,11 +93,14 @@ class Bus:
                 log.warning("id-handler fout: %s", exc)
 
         await js.subscribe(config.SECURITY_SUBJECT, cb=_sec_handler,
-                           ordered_consumer=True)
+                           config=_REPLAY_CFG)
         await js.subscribe(config.IDENTITY_SUBJECT, cb=_id_handler,
-                           ordered_consumer=True)
+                           config=ConsumerConfig(
+                               deliver_policy=DeliverPolicy.ALL,
+                               ack_policy=AckPolicy.NONE,
+                           ))
 
-        log.info("geabonneerd (JetStream ordered): %s | %s",
+        log.info("geabonneerd (JetStream, geen flow control): %s | %s",
                  config.SECURITY_SUBJECT, config.IDENTITY_SUBJECT)
         log.info("replay loopt — events worden opgeslagen in SQLite...")
 
