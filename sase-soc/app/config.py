@@ -50,3 +50,7 @@ PRUNE_INTERVAL_SEC = int(os.environ.get("PRUNE_INTERVAL_SEC", str(6 * 3600)))
 SCORE_POLL_INTERVAL = float(os.environ.get("SCORE_POLL_INTERVAL", "2.0"))
 HTTP_PORT           = int(os.environ.get("HTTP_PORT", "8090"))
 DISPLAY_TZ          = os.environ.get("DISPLAY_TZ", "Europe/Brussels")
+
+# ── Identity-bridge secret (Fase fix — X-Bridge-Secret header) ──
+# Waarde ophalen: sudo grep LOOKUP_SECRET /opt/identity-bridge/.env (of docker inspect)
+IDENTITY_BRIDGE_SECRET = os.environ.get("IDENTITY_BRIDGE_SECRET", "")
