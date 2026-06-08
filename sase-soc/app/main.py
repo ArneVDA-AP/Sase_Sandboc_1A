@@ -248,3 +248,74 @@ async def websocket(ws: WebSocket):
         pass
     finally:
         await ws_mgr.disconnect(ws)
+
+
+# ── Fase 4b: Quarantaine endpoints ──────────────────────────────────────────
+
+@app.get("/api/netbird/peers")
+async def api_netbird_peers():
+    """Alle ingeschreven NetBird peers + huidige groepen (voor de peer-tabel)."""
+    from app.quarantine import get_all_peers
+    peers = await get_all_peers()
+    quarantines = set(await scores.active_quarantines())
+    q_group_id = config.NETBIRD_QUARANTINE_GROUP_ID
+    result = []
+    for p in peers:
+        group_names = [g.get("name") for g in (p.get("groups") or [])]
+        in_quarantine = any(g.get("id") == q_group_id for g in (p.get("groups") or []))
+        # overlay IP zonder prefix
+        ip = str(p.get("ip", "")).split("/")[0]
+        rec = await identity.resolve(ip) if ip else {}
+        result.append({
+            "id":           p.get("id"),
+            "name":         p.get("name"),
+            "ip":           ip,
+            "os":           p.get("os"),
+            "connected":    p.get("connected"),
+            "groups":       group_names,
+            "quarantined":  in_quarantine,
+            "display":      rec.get("display") or p.get("name") or ip,
+            "persona":      rec.get("persona"),
+        })
+    result.sort(key=lambda x: (not x["connected"], x["display"] or ""))
+    return {"peers": result, "quarantines": list(quarantines)}
+
+
+@app.post("/api/quarantine/{overlay_ip:path}")
+async def api_quarantine(overlay_ip: str):
+    from app.quarantine import quarantine_peer
+    result = await quarantine_peer(overlay_ip)
+    if result["ok"]:
+        item = {
+            "kind":         "quarantine_active",
+            "actor_ip":     overlay_ip,
+            "actor_display": result.get("peer_name"),
+            "detail":       f"Manueel dashboard | uit: {result.get('stripped', [])}",
+            "raw":          result,
+        }
+        await store.insert_timeline(item)
+        await ws_mgr.broadcast("timeline", item)
+        await ws_mgr.broadcast("quarantine_change",
+                               {"ip": overlay_ip, "state": "quarantined",
+                                "peer_name": result.get("peer_name")})
+    return result
+
+
+@app.post("/api/unquarantine/{overlay_ip:path}")
+async def api_unquarantine(overlay_ip: str):
+    from app.quarantine import unquarantine_peer
+    result = await unquarantine_peer(overlay_ip)
+    if result["ok"]:
+        item = {
+            "kind":         "quarantine_cleared",
+            "actor_ip":     overlay_ip,
+            "actor_display": result.get("peer_name"),
+            "detail":       f"Manueel hersteld via dashboard | in: {result.get('restored', [])}",
+            "raw":          result,
+        }
+        await store.insert_timeline(item)
+        await ws_mgr.broadcast("timeline", item)
+        await ws_mgr.broadcast("quarantine_change",
+                               {"ip": overlay_ip, "state": "restored",
+                                "peer_name": result.get("peer_name")})
+    return result
