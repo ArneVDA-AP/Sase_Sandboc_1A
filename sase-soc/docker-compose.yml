@@ -7,10 +7,13 @@ services:
     networks:
       - sase-internal
     ports:
-      - "0.0.0.0:8090:8090"   # Fase 1: bereikbaar voor test; Fase 3: achter Caddy/SNI
+      - "0.0.0.0:8090:8090"
     volumes:
-      - ./data:/data           # SQLite 30-dagen store
+      - ./data:/data
+      - /home/saseadmin/netbird-deploy/caddy-root.crt:/certs/caddy-root.crt:ro
+    extra_hosts:
+      - "netbird.sandbox.local:192.168.122.23"
 
 networks:
   sase-internal:
-    external: true             # bestaand netwerk; niets gewijzigd
+    external: true
