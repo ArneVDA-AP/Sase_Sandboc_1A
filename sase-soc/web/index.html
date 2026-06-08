@@ -3,250 +3,443 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SASE SOC — Enforcement Dashboard</title>
+<title>SASE SOC Dashboard</title>
 <style>
-:root{--bg:#0f1117;--surface:#1a1d2e;--border:#2a2d3e;--text:#e2e8f0;--muted:#64748b;
-  --green:#22c55e;--red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;--purple:#a855f7;--cyan:#06b6d4;
-  --font:'JetBrains Mono',ui-monospace,monospace}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;min-height:100vh}
-header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--border);
-  background:var(--surface)}
-header h1{font-size:15px;font-weight:700;letter-spacing:.04em}
-#conn{font-size:11px;padding:3px 8px;border-radius:20px;background:#1f2937}
-#conn.ok{color:var(--green)}#conn.err{color:var(--red)}
-.grid{display:grid;grid-template-columns:1fr 340px;gap:1px;height:calc(100vh - 50px);background:var(--border)}
-.panel{background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
-.ptitle{padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);
-  background:var(--surface);display:flex;gap:12px;align-items:center}
-.filters{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-.filters select,.filters input{background:#1a1d2e;border:1px solid var(--border);color:var(--text);
-  padding:3px 8px;border-radius:4px;font-size:12px;font-family:var(--font)}
-table{width:100%;border-collapse:collapse;font-size:12px}
-thead th{text-align:left;padding:6px 10px;font-size:10px;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);
-  position:sticky;top:0;background:var(--surface);z-index:1}
-tbody tr{border-bottom:1px solid #1a1d2e;cursor:default;transition:.1s}
-tbody tr:hover{background:#1a1d2e}
-td{padding:5px 10px;vertical-align:top;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.04em}
-.tag.malware{background:#450a0a;color:var(--red)}
-.tag.dlp{background:#1c1917;color:var(--amber)}
-.tag.casb{background:#1e1b4b;color:var(--purple)}
-.tag.ids{background:#0c1a2e;color:var(--blue)}
-.tag.proxy{background:#0f172a;color:var(--muted)}
-.tag.dns{background:#042f2e;color:var(--cyan)}
-.tag.identity{background:#1a1a2e;color:#8b5cf6}
-.tag.control{background:#270c03;color:var(--amber)}
-.scored{color:var(--amber);font-size:10px}
-.notable{color:var(--red)}
+:root{
+  --bg:#f0f4f8;--surface:#ffffff;--surface2:#f8fafc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#1e293b;--text2:#475569;--muted:#94a3b8;
+  --navy:#1e3a5f;--navy2:#1e40af;
+  --blue:#2563eb;--blue-light:#dbeafe;--blue-mid:#93c5fd;
+  --sky:#0ea5e9;--sky-light:#e0f2fe;
+  --red:#dc2626;--red-light:#fee2e2;
+  --amber:#d97706;--amber-light:#fef3c7;
+  --green:#16a34a;--green-light:#dcfce7;
+  --purple:#7c3aed;--purple-light:#ede9fe;
+  --cyan:#0891b2;--cyan-light:#cffafe;
+  --orange:#ea580c;--orange-light:#ffedd5;
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06)
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── Header ── */
+header{background:var(--navy);color:#fff;padding:0 20px;height:52px;display:flex;align-items:center;gap:16px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.logo{font-size:15px;font-weight:700;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.logo svg{opacity:.9}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:#6b7280;transition:.3s}
+.conn-dot.ok{background:#4ade80;box-shadow:0 0 6px #4ade80}
+.conn-dot.err{background:#f87171}
+#conn-label{font-size:11px;color:#94a3b8}
+.header-stats{display:flex;gap:20px;margin-left:auto}
+.hstat{text-align:right}
+.hstat-val{font-size:18px;font-weight:700;color:#fff;line-height:1}
+.hstat-label{font-size:10px;color:#93c5fd;letter-spacing:.06em;text-transform:uppercase}
+#replay-banner{display:none;background:#1d4ed8;color:#bfdbfe;font-size:11px;padding:2px 10px;border-radius:20px;margin-left:12px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ── Layout ── */
+.main{display:grid;grid-template-columns:1fr 340px;gap:12px;padding:12px;flex:1;min-height:0;overflow:hidden}
+
+/* ── Card ── */
+.card{background:var(--surface);border-radius:10px;box-shadow:var(--shadow);border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.card-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--surface);flex-shrink:0}
+.card-title{font-size:12px;font-weight:700;color:var(--text);letter-spacing:.03em}
+.card-badge{background:var(--blue-light);color:var(--blue);font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:auto}
+
+/* ── Filters ── */
+.filters{padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0}
+.pill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:.15s;background:var(--surface);color:var(--text2);border-color:var(--border)}
+.pill:hover{border-color:var(--blue-mid);color:var(--blue)}
+.pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pill.all.active{background:var(--navy2);border-color:var(--navy2)}
+.search-wrap{margin-left:auto;display:flex;gap:6px}
+.search-wrap input,.search-wrap select{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:3px 10px;border-radius:6px;font-size:12px;font-family:var(--font);outline:none;transition:.15s}
+.search-wrap input:focus,.search-wrap select:focus{border-color:var(--blue)}
+.autoscroll-btn{padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font-family:var(--font)}
+.autoscroll-btn.on{background:var(--green-light);border-color:var(--green);color:var(--green)}
+
+/* ── Event table ── */
 #feed-body{overflow-y:auto;flex:1}
-#feed-body table{table-layout:fixed}
-/* Score board */
-#score-board{overflow-y:auto;flex:1}
-.peer-card{padding:10px 14px;border-bottom:1px solid var(--border)}
-.peer-name{font-weight:700;font-size:12px;margin-bottom:4px}
-.peer-meta{color:var(--muted);font-size:10px;margin-bottom:6px}
-.bar-wrap{background:#1a1d2e;border-radius:4px;height:8px;overflow:hidden;margin-bottom:4px}
-.bar{height:8px;border-radius:4px;transition:.4s width}
-.bar.safe{background:var(--green)}.bar.warn{background:var(--amber)}.bar.hot{background:var(--red)}
-.breakdown{font-size:10px;color:var(--muted)}
-.quarantine-badge{display:inline-block;padding:1px 7px;background:#450a0a;
-  color:var(--red);border-radius:10px;font-size:10px;font-weight:700;margin-left:6px}
-/* Timeline */
-#timeline-list{overflow-y:auto;flex:1;padding:8px}
-.tl-item{padding:8px 10px;border-radius:6px;margin-bottom:6px;font-size:11px;border:1px solid var(--border)}
-.tl-item.threshold_crossed{border-color:var(--amber)}
-.tl-item.quarantine_active{border-color:var(--red);background:#450a0a22}
-.tl-item.quarantine_cleared{border-color:var(--green);background:#14532d22}
-.tl-item.action_failed{border-color:var(--red)}
-.tl-time{color:var(--muted);font-size:10px}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;background:var(--surface2);padding:6px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);z-index:1}
+tbody tr{border-bottom:1px solid var(--border);transition:.1s;cursor:default}
+tbody tr:hover{background:#f8faff}
+tbody tr.notable-row{background:#fefce8}
+tbody tr.notable-row:hover{background:#fef9c3}
+td{padding:5px 10px;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0}
+td.time{color:var(--muted);font-family:var(--mono);font-size:11px;width:64px}
+td.cat{width:76px}
+td.who{width:160px;font-weight:500}
+td.prod{width:72px;color:var(--text2);font-size:11px}
+td.summary{color:var(--text2)}
+td.score{width:48px;text-align:right}
+
+/* ── Category tags ── */
+.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.03em}
+.tag.malware{background:var(--red-light);color:var(--red)}
+.tag.dlp{background:var(--orange-light);color:var(--orange)}
+.tag.casb{background:var(--purple-light);color:var(--purple)}
+.tag.ids{background:var(--blue-light);color:var(--blue)}
+.tag.proxy{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.tag.dns{background:var(--cyan-light);color:var(--cyan)}
+.tag.identity{background:var(--sky-light);color:var(--sky)}
+.tag.control,.tag.unknown{background:var(--amber-light);color:var(--amber)}
+.score-hint{display:inline-block;background:var(--amber-light);color:var(--amber);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.notable-icon{color:var(--amber);font-size:11px}
+
+/* ── Right column ── */
+.right-col{display:flex;flex-direction:column;gap:12px;min-height:0}
+.right-col .card{flex:1;min-height:0}
+
+/* ── Score board ── */
+#score-board{overflow-y:auto;flex:1;padding:4px}
+.no-scores{padding:20px;text-align:center;color:var(--muted);font-size:12px}
+.peer-card{padding:10px 12px;border-bottom:1px solid var(--border)}
+.peer-card:last-child{border-bottom:none}
+.peer-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.peer-name{font-weight:700;font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peer-persona{font-size:10px;background:var(--blue-light);color:var(--blue);padding:1px 7px;border-radius:10px;font-weight:600;flex-shrink:0}
+.q-badge{font-size:10px;background:var(--red-light);color:var(--red);padding:1px 7px;border-radius:10px;font-weight:700;flex-shrink:0}
+.peer-ip{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:5px}
+.score-bar-wrap{background:var(--bg);border-radius:4px;height:6px;margin-bottom:4px;overflow:hidden}
+.score-bar{height:6px;border-radius:4px;transition:.4s width}
+.score-bar.safe{background:var(--green)}
+.score-bar.warn{background:var(--amber)}
+.score-bar.hot{background:var(--red)}
+.score-info{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+
+/* ── Timeline ── */
+#timeline-list{overflow-y:auto;flex:1;padding:8px;display:flex;flex-direction:column;gap:6px}
+.tl-item{padding:8px 10px;border-radius:7px;border-left:3px solid var(--border);background:var(--surface2);font-size:11px}
+.tl-item.threshold_crossed{border-color:var(--amber);background:var(--amber-light)}
+.tl-item.quarantine_active{border-color:var(--red);background:var(--red-light)}
+.tl-item.quarantine_cleared{border-color:var(--green);background:var(--green-light)}
+.tl-item.action_failed{border-color:var(--red);background:var(--red-light)}
+.tl-kind{font-weight:700;color:var(--text);margin-bottom:2px}
+.tl-who{color:var(--text2)}
+.tl-detail{color:var(--muted);font-size:10px;margin-top:2px}
+.tl-time{font-size:10px;color:var(--muted);margin-top:3px}
+.no-timeline{padding:20px;text-align:center;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
+
 <header>
-  <h1>⚡ SASE SOC — Enforcement Dashboard</h1>
-  <span id="conn" class="err">● Verbinden…</span>
-  <span style="margin-left:auto;color:var(--muted);font-size:11px" id="ev-count">0 events</span>
+  <div class="logo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    SASE SOC Dashboard
+  </div>
+  <div class="conn-dot err" id="conn-dot"></div>
+  <span id="conn-label">Verbinden…</span>
+  <div id="replay-banner">⏳ Historische events laden…</div>
+  <div class="header-stats">
+    <div class="hstat"><div class="hstat-val" id="stat-events">0</div><div class="hstat-label">Events</div></div>
+    <div class="hstat"><div class="hstat-val" id="stat-notable">0</div><div class="hstat-label">Notables</div></div>
+    <div class="hstat"><div class="hstat-val" id="stat-quarantine" style="color:#f87171">0</div><div class="hstat-label">Quarantaine</div></div>
+  </div>
 </header>
 
-<div class="grid">
-  <!-- Live event feed -->
-  <div class="panel">
-    <div class="ptitle">
-      Live Event Feed
-      <select id="f-cat" style="margin-left:auto"><option value="">Alle categorieën</option>
-        <option>malware</option><option>dlp</option><option>proxy</option>
-        <option>dns</option><option>ids</option><option>casb</option><option>identity</option>
-      </select>
-      <select id="f-prod"><option value="">Alle producers</option>
-        <option>c-icap</option><option>dlp</option><option>squid</option>
-        <option>suricata</option><option>o365</option>
-      </select>
-      <input id="f-q" placeholder="zoeken…" style="width:120px">
+<div class="main">
+
+  <!-- Live Event Feed -->
+  <div class="card">
+    <div class="card-head">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span class="card-title">Live Beveiligingsfeed</span>
+      <span class="card-badge" id="feed-badge">0</span>
+      <button class="autoscroll-btn on" id="scroll-btn" onclick="toggleScroll()" style="margin-left:8px">↓ Autoscroll aan</button>
+    </div>
+    <div class="filters">
+      <button class="pill all active" onclick="setFilter('cat','')">Alle</button>
+      <button class="pill" onclick="setFilter('cat','malware')">Malware</button>
+      <button class="pill" onclick="setFilter('cat','dlp')">DLP</button>
+      <button class="pill" onclick="setFilter('cat','casb')">CASB</button>
+      <button class="pill" onclick="setFilter('cat','ids')">IDS</button>
+      <button class="pill" onclick="setFilter('cat','proxy')">Proxy</button>
+      <button class="pill" onclick="setFilter('cat','dns')">DNS</button>
+      <button class="pill" onclick="setFilter('cat','identity')">Identity</button>
+      <div class="search-wrap">
+        <select id="f-persona" onchange="filterRows()">
+          <option value="">Alle persona's</option>
+          <option>Studenten</option><option>Docenten</option><option>Admins</option>
+        </select>
+        <input id="f-q" placeholder="Zoeken…" oninput="filterRows()" style="width:130px">
+      </div>
     </div>
     <div id="feed-body">
       <table>
-        <colgroup><col style="width:72px"><col style="width:72px"><col style="width:180px">
-          <col style="width:80px"><col><col style="width:54px"></colgroup>
+        <colgroup>
+          <col style="width:64px"><col style="width:80px"><col style="width:165px">
+          <col style="width:76px"><col><col style="width:50px">
+        </colgroup>
         <thead><tr>
-          <th>Tijd</th><th>Categorie</th><th>Wie</th><th>Producer</th>
-          <th>Samenvatting</th><th>Score</th>
+          <th>Tijd</th><th>Categorie</th><th>Wie</th>
+          <th>Producer</th><th>Samenvatting</th><th>Score</th>
         </tr></thead>
         <tbody id="feed-rows"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- Right column: scores + timeline -->
-  <div style="display:flex;flex-direction:column;height:100%">
-    <div class="panel" style="flex:0 0 50%">
-      <div class="ptitle">Threat Score Board</div>
-      <div id="score-board"><p style="padding:16px;color:var(--muted)">Wachten op scores…</p></div>
+  <!-- Right column -->
+  <div class="right-col">
+
+    <!-- Threat Score Board -->
+    <div class="card">
+      <div class="card-head">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span class="card-title">Threat Score Board</span>
+        <span class="card-badge" id="score-badge" style="background:var(--red-light);color:var(--red)">0 actief</span>
+      </div>
+      <div id="score-board"><p class="no-scores">Geen actieve threat scores</p></div>
     </div>
-    <div class="panel" style="flex:1;border-top:1px solid var(--border)">
-      <div class="ptitle">Enforcement Tijdlijn</div>
-      <div id="timeline-list"></div>
+
+    <!-- Enforcement Timeline -->
+    <div class="card">
+      <div class="card-head">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span class="card-title">Enforcement Tijdlijn</span>
+      </div>
+      <div id="timeline-list"><p class="no-timeline">Geen enforcement events</p></div>
     </div>
+
   </div>
 </div>
 
 <script>
-const MAX_ROWS = 400;
-let evCount = 0;
-let scores = {};     // ip -> score-obj
+const MAX_ROWS = 500;
+let evCount = 0, notableCount = 0, quarantineCount = 0;
+let scores = {};
 let quarantines = new Set();
+let autoScroll = true;
+let activeCatFilter = '';
+let activePersonaFilter = '';
+let activeQ = '';
 
-// ── filters ──
-const fCat = document.getElementById('f-cat');
-const fProd = document.getElementById('f-prod');
-const fQ   = document.getElementById('f-q');
-[fCat, fProd, fQ].forEach(el => el.addEventListener('input', filterRows));
+// ── Stats ──
+function updateStats() {
+  document.getElementById('stat-events').textContent = evCount.toLocaleString();
+  document.getElementById('stat-notable').textContent = notableCount;
+  document.getElementById('stat-quarantine').textContent = quarantineCount;
+  document.getElementById('feed-badge').textContent = evCount.toLocaleString();
+}
+
+// ── Filters ──
+function setFilter(type, val) {
+  if (type === 'cat') {
+    activeCatFilter = val;
+    document.querySelectorAll('.filters .pill').forEach(p => {
+      const pval = p.textContent.trim().toLowerCase().replace('alle','').trim();
+      p.classList.toggle('active',
+        val === '' ? p.classList.contains('all') : pval === val
+      );
+    });
+  }
+  filterRows();
+}
 
 function filterRows() {
-  const cat = fCat.value.toLowerCase();
-  const prod = fProd.value.toLowerCase();
-  const q = fQ.value.toLowerCase();
+  const cat = activeCatFilter;
+  const persona = document.getElementById('f-persona').value.toLowerCase();
+  const q = document.getElementById('f-q').value.toLowerCase();
   document.querySelectorAll('#feed-rows tr').forEach(tr => {
     const show = (!cat || tr.dataset.cat === cat)
-              && (!prod || tr.dataset.prod === prod)
+              && (!persona || (tr.dataset.persona||'').toLowerCase() === persona)
               && (!q || tr.textContent.toLowerCase().includes(q));
     tr.style.display = show ? '' : 'none';
   });
 }
 
-// ── helpers ──
+// ── Autoscroll ──
+function toggleScroll() {
+  autoScroll = !autoScroll;
+  const btn = document.getElementById('scroll-btn');
+  btn.textContent = autoScroll ? '↓ Autoscroll aan' : '⏸ Autoscroll uit';
+  btn.className = 'autoscroll-btn' + (autoScroll ? ' on' : '');
+}
+
+function scrollFeed() {
+  if (!autoScroll) return;
+  const fb = document.getElementById('feed-body');
+  fb.scrollTop = 0;
+}
+
+// ── Helpers ──
 function tz(ep) {
   if (!ep) return '—';
-  return new Date(ep * 1000).toLocaleTimeString('nl-BE',
-    {timeZone:'Europe/Brussels', hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  return new Date(ep*1000).toLocaleTimeString('nl-BE',
+    {timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 
 function tag(cat) {
-  return `<span class="tag ${cat || ''}">${cat || '?'}</span>`;
+  const icons = {malware:'🔴',dlp:'🟠',casb:'🟣',ids:'🔵',proxy:'⬜',dns:'🔷',identity:'🌐'};
+  return `<span class="tag ${cat||'unknown'}">${cat||'?'}</span>`;
 }
 
-// ── event row ──
-function addRow(ev) {
-  const who = ev.actor_display || ev.actor_user || ev.actor_ip || '?';
-  const scored = ev.scored ? `<span class="scored">+${ev.weight}</span>` : '';
-  const notableClass = ev.notable ? ' notable' : '';
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+// ── Add event row ──
+function addRow(ev, prepend=true) {
+  const who = ev.actor_display || ev.actor_user || ev.actor_ip || '—';
+  const persona = ev.actor_persona || '';
+  const scoreHtml = ev.scored
+    ? `<span class="score-hint">+${ev.weight}</span>` : '';
+  const notable = ev.notable;
+
   const tr = document.createElement('tr');
   tr.dataset.cat = ev.category || '';
-  tr.dataset.prod = ev.producer || '';
+  tr.dataset.persona = persona;
+  if (notable) tr.classList.add('notable-row');
+
   tr.innerHTML = `
-    <td style="color:var(--muted)">${tz(ev.ts_epoch)}</td>
-    <td>${tag(ev.category)}</td>
-    <td class="nowrap${notableClass}" title="${ev.actor_ip || ''}">${escHtml(who)}</td>
-    <td style="color:var(--muted)">${escHtml(ev.producer || '')}</td>
-    <td title="${escHtml(ev.summary || '')}">${escHtml((ev.summary || '').slice(0,80))}</td>
-    <td>${scored}</td>`;
+    <td class="time">${tz(ev.ts_epoch)}</td>
+    <td class="cat">${tag(ev.category)}${notable?'<span class="notable-icon" title="Anonieme/org-brede share"> ⚠</span>':''}</td>
+    <td class="who" title="${esc(ev.actor_ip||'')}"><span style="font-weight:600">${esc(who)}</span>${persona?`<span style="font-size:9px;color:var(--blue);margin-left:4px">${esc(persona)}</span>`:''}</td>
+    <td class="prod">${esc(ev.producer||'')}</td>
+    <td class="summary" title="${esc(ev.summary||'')}">${esc((ev.summary||'').slice(0,90))}</td>
+    <td class="score">${scoreHtml}</td>`;
+
   const tbody = document.getElementById('feed-rows');
-  tbody.prepend(tr);
-  // max rijen
+  if (prepend) {
+    tbody.prepend(tr);
+    evCount++;
+    if (notable) notableCount++;
+    updateStats();
+    scrollFeed();
+  } else {
+    tbody.appendChild(tr);
+    evCount++;
+    if (notable) notableCount++;
+  }
+
   while (tbody.rows.length > MAX_ROWS) tbody.deleteRow(tbody.rows.length - 1);
-  evCount++;
-  document.getElementById('ev-count').textContent = `${evCount} events`;
   filterRows();
 }
 
-// ── score board ──
-function renderScores() {
+// ── Score board ──
+function renderScores(data) {
+  quarantines = new Set(data.active_quarantines || []);
+  quarantineCount = quarantines.size;
+  updateStats();
+  document.getElementById('score-badge').textContent =
+    (data.peers||[]).length + ' actief';
+
   const board = document.getElementById('score-board');
-  const list = Object.values(scores).sort((a,b) => b.score - a.score);
-  if (!list.length) { board.innerHTML = '<p style="padding:16px;color:var(--muted)">Geen actieve scores.</p>'; return; }
-  board.innerHTML = list.map(s => {
-    const pct = Math.min(100, Math.round(s.score / 80 * 100));
-    const cls = s.score >= 80 ? 'hot' : s.score >= 50 ? 'warn' : 'safe';
-    const qBadge = (s.over_threshold || quarantines.has(s.peer_id)) ? '<span class="quarantine-badge">QUARANTAINE</span>' : '';
-    const bdown = Object.entries(s.breakdown || {}).map(([k,v])=>`${k}×${v}`).join(', ');
-    const who = s.actor_display || s.ip;
+  const peers = (data.peers||[]).sort((a,b)=>b.score-a.score);
+  if (!peers.length) {
+    board.innerHTML = '<p class="no-scores">Geen actieve threat scores</p>';
+    return;
+  }
+  board.innerHTML = peers.map(s => {
+    const pct = Math.min(100, Math.round(s.score/80*100));
+    const cls = s.score>=80?'hot':s.score>=50?'warn':'safe';
+    const qBadge = (s.over_threshold||quarantines.has(s.peer_id))
+      ? '<span class="q-badge">QUARANTAINE</span>' : '';
+    const persona = s.actor_persona
+      ? `<span class="peer-persona">${esc(s.actor_persona)}</span>` : '';
+    const bdown = Object.entries(s.breakdown||{})
+      .map(([k,v])=>`${k}×${v}`).join(' · ');
     return `<div class="peer-card">
-      <div class="peer-name">${escHtml(who)}${qBadge}</div>
-      <div class="peer-meta">${escHtml(s.actor_persona || '')} &nbsp;·&nbsp; ${escHtml(s.ip)}</div>
-      <div class="bar-wrap"><div class="bar ${cls}" style="width:${pct}%"></div></div>
-      <div class="breakdown">${s.score} / 80 pts &nbsp;·&nbsp; ${bdown}</div>
+      <div class="peer-row">
+        <div class="peer-name">${esc(s.actor_display||s.ip)}</div>
+        ${persona}${qBadge}
+      </div>
+      <div class="peer-ip">${esc(s.ip)}</div>
+      <div class="score-bar-wrap"><div class="score-bar ${cls}" style="width:${pct}%"></div></div>
+      <div class="score-info">
+        <span style="font-weight:700;color:${s.score>=80?'var(--red)':s.score>=50?'var(--amber)':'var(--green)'}">${s.score} / 80 pts</span>
+        <span>${esc(bdown)}</span>
+      </div>
     </div>`;
   }).join('');
 }
 
-// ── timeline ──
+// ── Timeline ──
 function addTimeline(item) {
   const labels = {
     threshold_crossed: '⚠ Drempel overschreden',
-    quarantine_active: '🔴 QUARANTAINE actief',
+    quarantine_active: '🔴 Quarantaine actief',
     quarantine_cleared: '✅ Quarantaine opgeheven',
     action_failed: '❌ Actie mislukt',
   };
+  const tl = document.getElementById('timeline-list');
+  const noEl = tl.querySelector('.no-timeline');
+  if (noEl) noEl.remove();
+
   const div = document.createElement('div');
   div.className = `tl-item ${item.kind}`;
-  const who = item.actor_display || item.actor_id || item.actor_ip || '?';
-  div.innerHTML = `<div><strong>${labels[item.kind] || item.kind}</strong></div>
-    <div>${escHtml(who)}</div>
-    ${item.score !== undefined ? `<div>score: ${item.score}</div>` : ''}
-    ${item.detail ? `<div style="color:var(--muted)">${escHtml(item.detail)}</div>` : ''}
+  const who = item.actor_display||item.actor_id||item.actor_ip||'?';
+  div.innerHTML = `
+    <div class="tl-kind">${labels[item.kind]||item.kind}</div>
+    <div class="tl-who">${esc(who)}</div>
+    ${item.score!=null?`<div class="tl-detail">Score: ${item.score}</div>`:''}
+    ${item.detail?`<div class="tl-detail">${esc(item.detail)}</div>`:''}
     <div class="tl-time">${new Date().toLocaleTimeString('nl-BE')}</div>`;
-  const tl = document.getElementById('timeline-list');
   tl.prepend(div);
-  while (tl.children.length > 50) tl.removeChild(tl.lastChild);
+  while (tl.children.length > 40) tl.removeChild(tl.lastChild);
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ── WebSocket met auto-reconnect ──
-let ws, retryMs = 1000;
+// ── WebSocket ──
+let ws, retryMs = 1500;
 function connect() {
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const proto = location.protocol==='https:'?'wss:':'ws:';
   ws = new WebSocket(`${proto}//${location.host}/ws`);
+
   ws.onopen = () => {
-    const el = document.getElementById('conn');
-    el.textContent = '● Verbonden'; el.className = 'ok';
-    retryMs = 1000;
+    document.getElementById('conn-dot').className = 'conn-dot ok';
+    document.getElementById('conn-label').textContent = 'Verbonden';
+    retryMs = 1500;
   };
+
   ws.onmessage = ({data}) => {
     const msg = JSON.parse(data);
-    if (msg.type === 'event') {
-      addRow(msg.data);
-    } else if (msg.type === 'snapshot_events') {
-      (msg.data || []).forEach(addRow);
-    } else if (msg.type === 'scores') {
-      scores = {};
-      (msg.data || []).forEach(s => { scores[s.ip] = s; });
-      quarantines = new Set((msg.active_quarantines || []));
-      renderScores();
-    } else if (msg.type === 'timeline') {
-      addTimeline(msg.data);
+    switch (msg.type) {
+      case 'event':
+        addRow(msg.data, true);
+        break;
+      case 'snapshot_events':
+        // Historische events — voeg toe onderaan (oudste eerst via reverse)
+        const events = (msg.data||[]).reverse();
+        document.getElementById('feed-body').scrollTop = 0;
+        events.forEach(ev => addRow(ev, false));
+        // Scroll naar top na snapshot
+        setTimeout(()=>{ document.getElementById('feed-body').scrollTop=0; },50);
+        break;
+      case 'scores':
+        renderScores(msg.data||{});
+        break;
+      case 'timeline':
+        addTimeline(msg.data);
+        break;
+      case 'replay_status':
+        document.getElementById('replay-banner').style.display =
+          msg.data.replay_done ? 'none' : 'inline-block';
+        break;
+      case 'replay_done':
+        document.getElementById('replay-banner').style.display = 'none';
+        // Fetch fresh snapshot now that replay is done
+        fetch('/api/events?limit=200')
+          .then(r=>r.json())
+          .then(d => {
+            document.getElementById('feed-rows').innerHTML = '';
+            evCount = 0; notableCount = 0; updateStats();
+            (d.events||[]).reverse().forEach(ev=>addRow(ev,false));
+            setTimeout(()=>{ document.getElementById('feed-body').scrollTop=0; },50);
+          });
+        break;
     }
   };
+
   ws.onclose = ws.onerror = () => {
-    const el = document.getElementById('conn');
-    el.textContent = `● Herverbinden in ${retryMs/1000}s…`; el.className = 'err';
+    document.getElementById('conn-dot').className = 'conn-dot err';
+    document.getElementById('conn-label').textContent = `Herverbinden in ${retryMs/1000}s…`;
     setTimeout(connect, retryMs);
-    retryMs = Math.min(retryMs * 2, 30000);
+    retryMs = Math.min(retryMs*2, 30000);
   };
 }
 connect();
