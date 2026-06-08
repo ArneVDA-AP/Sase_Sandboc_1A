@@ -7,11 +7,9 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f0f4f8;--surface:#ffffff;--surface2:#f8fafc;
-  --border:#e2e8f0;--border2:#cbd5e1;
-  --text:#1e293b;--text2:#475569;--muted:#94a3b8;
-  --navy:#1e3a5f;--navy2:#1e40af;
-  --blue:#2563eb;--blue-light:#dbeafe;--blue-mid:#93c5fd;
+  --bg:#f0f4f8;--surface:#fff;--surface2:#f8fafc;
+  --border:#e2e8f0;--text:#1e293b;--text2:#475569;--muted:#94a3b8;
+  --navy:#1e3a5f;--blue:#2563eb;--blue-light:#dbeafe;--blue-mid:#93c5fd;
   --sky:#0ea5e9;--sky-light:#e0f2fe;
   --red:#dc2626;--red-light:#fee2e2;
   --amber:#d97706;--amber-light:#fef3c7;
@@ -21,138 +19,148 @@
   --orange:#ea580c;--orange-light:#ffedd5;
   --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
   --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
-  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06)
 }
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-/* ── Header ── */
-header{background:var(--navy);color:#fff;padding:0 20px;height:52px;display:flex;align-items:center;gap:16px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.logo{font-size:15px;font-weight:700;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
-.logo svg{opacity:.9}
-.conn-dot{width:8px;height:8px;border-radius:50%;background:#6b7280;transition:.3s}
-.conn-dot.ok{background:#4ade80;box-shadow:0 0 6px #4ade80}
-.conn-dot.err{background:#f87171}
+/* Header */
+header{background:var(--navy);color:#fff;padding:0 20px;height:52px;display:flex;align-items:center;gap:14px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.logo{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:#6b7280;flex-shrink:0}
+.conn-dot.ok{background:#4ade80;box-shadow:0 0 6px #4ade80}.conn-dot.err{background:#f87171}
 #conn-label{font-size:11px;color:#94a3b8}
-.header-stats{display:flex;gap:20px;margin-left:auto}
-.hstat{text-align:right}
-.hstat-val{font-size:18px;font-weight:700;color:#fff;line-height:1}
-.hstat-label{font-size:10px;color:#93c5fd;letter-spacing:.06em;text-transform:uppercase}
-#replay-banner{display:none;background:#1d4ed8;color:#bfdbfe;font-size:11px;padding:2px 10px;border-radius:20px;margin-left:12px;animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+#replay-banner{background:#1d4ed8;color:#bfdbfe;font-size:11px;padding:2px 10px;border-radius:20px;display:none;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.hstats{display:flex;gap:20px;margin-left:auto}
+.hs{text-align:right}.hs-v{font-size:17px;font-weight:700;color:#fff;line-height:1}.hs-l{font-size:10px;color:#93c5fd;text-transform:uppercase;letter-spacing:.06em}
 
-/* ── Layout ── */
-.main{display:grid;grid-template-columns:1fr 340px;gap:12px;padding:12px;flex:1;min-height:0;overflow:hidden}
+/* Tabs */
+.tabs{display:flex;gap:2px;padding:8px 12px 0;background:var(--bg);flex-shrink:0}
+.tab{padding:7px 16px;border-radius:8px 8px 0 0;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;border-bottom:none;color:var(--muted);background:var(--surface2);transition:.15s}
+.tab.active{background:var(--surface);color:var(--blue);border-color:var(--border)}
 
-/* ── Card ── */
+/* Layout */
+.main{display:grid;grid-template-columns:1fr 340px;gap:10px;padding:0 10px 10px;flex:1;min-height:0;overflow:hidden}
+.tab-content{display:none}.tab-content.active{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+
+/* Cards */
 .card{background:var(--surface);border-radius:10px;box-shadow:var(--shadow);border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.card-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--surface);flex-shrink:0}
-.card-title{font-size:12px;font-weight:700;color:var(--text);letter-spacing:.03em}
-.card-badge{background:var(--blue-light);color:var(--blue);font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:auto}
+.card-head{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--surface);flex-shrink:0}
+.card-title{font-size:12px;font-weight:700;color:var(--text)}
+.cbadge{font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--blue-light);color:var(--blue)}
+.cbadge.red{background:var(--red-light);color:var(--red)}
 
-/* ── Filters ── */
-.filters{padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0}
-.pill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:.15s;background:var(--surface);color:var(--text2);border-color:var(--border)}
-.pill:hover{border-color:var(--blue-mid);color:var(--blue)}
-.pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-.pill.all.active{background:var(--navy2);border-color:var(--navy2)}
-.search-wrap{margin-left:auto;display:flex;gap:6px}
-.search-wrap input,.search-wrap select{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:3px 10px;border-radius:6px;font-size:12px;font-family:var(--font);outline:none;transition:.15s}
-.search-wrap input:focus,.search-wrap select:focus{border-color:var(--blue)}
-.autoscroll-btn{padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font-family:var(--font)}
-.autoscroll-btn.on{background:var(--green-light);border-color:var(--green);color:var(--green)}
+/* Filters */
+.filters{padding:7px 12px;display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0;align-items:center}
+.pill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);transition:.12s}
+.pill:hover{border-color:var(--blue-mid);color:var(--blue)}.pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pill.all.active{background:var(--navy);border-color:var(--navy)}
+.ml-auto{margin-left:auto;display:flex;gap:6px;align-items:center}
+.fin{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:3px 9px;border-radius:6px;font-size:12px;font-family:var(--font);outline:none}
+.fin:focus{border-color:var(--blue)}
+.scroll-btn{padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font-family:var(--font)}
+.scroll-btn.on{background:var(--green-light);border-color:var(--green);color:var(--green)}
 
-/* ── Event table ── */
+/* Tables */
 #feed-body{overflow-y:auto;flex:1}
 table{width:100%;border-collapse:collapse}
 thead th{position:sticky;top:0;background:var(--surface2);padding:6px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);z-index:1}
-tbody tr{border-bottom:1px solid var(--border);transition:.1s;cursor:default}
+tbody tr{border-bottom:1px solid var(--border);transition:.1s}
 tbody tr:hover{background:#f8faff}
 tbody tr.notable-row{background:#fefce8}
 tbody tr.notable-row:hover{background:#fef9c3}
 td{padding:5px 10px;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0}
-td.time{color:var(--muted);font-family:var(--mono);font-size:11px;width:64px}
-td.cat{width:76px}
-td.who{width:160px;font-weight:500}
-td.prod{width:72px;color:var(--text2);font-size:11px}
-td.summary{color:var(--text2)}
-td.score{width:48px;text-align:right}
+td.time{width:64px;color:var(--muted);font-family:var(--mono);font-size:11px}
+td.cat{width:80px}td.who{width:160px;font-weight:500}
+td.prod{width:72px;color:var(--text2);font-size:11px}td.score-td{width:50px;text-align:right}
 
-/* ── Category tags ── */
-.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.03em}
-.tag.malware{background:var(--red-light);color:var(--red)}
-.tag.dlp{background:var(--orange-light);color:var(--orange)}
-.tag.casb{background:var(--purple-light);color:var(--purple)}
-.tag.ids{background:var(--blue-light);color:var(--blue)}
-.tag.proxy{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
-.tag.dns{background:var(--cyan-light);color:var(--cyan)}
-.tag.identity{background:var(--sky-light);color:var(--sky)}
-.tag.control,.tag.unknown{background:var(--amber-light);color:var(--amber)}
-.score-hint{display:inline-block;background:var(--amber-light);color:var(--amber);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
-.notable-icon{color:var(--amber);font-size:11px}
+/* Tags */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.tag.malware{background:var(--red-light);color:var(--red)}.tag.dlp{background:var(--orange-light);color:var(--orange)}
+.tag.casb{background:var(--purple-light);color:var(--purple)}.tag.ids{background:var(--blue-light);color:var(--blue)}
+.tag.proxy{background:var(--bg);color:var(--muted);border:1px solid var(--border)}.tag.dns{background:var(--cyan-light);color:var(--cyan)}
+.tag.identity{background:var(--sky-light);color:var(--sky)}.tag.control,.tag.unknown{background:var(--amber-light);color:var(--amber)}
+.score-hint{background:var(--amber-light);color:var(--amber);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
 
-/* ── Right column ── */
-.right-col{display:flex;flex-direction:column;gap:12px;min-height:0}
+/* Right column */
+.right-col{display:flex;flex-direction:column;gap:10px;min-height:0}
 .right-col .card{flex:1;min-height:0}
 
-/* ── Score board ── */
+/* Score board */
 #score-board{overflow-y:auto;flex:1;padding:4px}
-.no-scores{padding:20px;text-align:center;color:var(--muted);font-size:12px}
-.peer-card{padding:10px 12px;border-bottom:1px solid var(--border)}
+.no-data{padding:20px;text-align:center;color:var(--muted);font-size:12px}
+.peer-card{padding:9px 12px;border-bottom:1px solid var(--border)}
 .peer-card:last-child{border-bottom:none}
-.peer-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-.peer-name{font-weight:700;font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.peer-persona{font-size:10px;background:var(--blue-light);color:var(--blue);padding:1px 7px;border-radius:10px;font-weight:600;flex-shrink:0}
-.q-badge{font-size:10px;background:var(--red-light);color:var(--red);padding:1px 7px;border-radius:10px;font-weight:700;flex-shrink:0}
-.peer-ip{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:5px}
-.score-bar-wrap{background:var(--bg);border-radius:4px;height:6px;margin-bottom:4px;overflow:hidden}
-.score-bar{height:6px;border-radius:4px;transition:.4s width}
-.score-bar.safe{background:var(--green)}
-.score-bar.warn{background:var(--amber)}
-.score-bar.hot{background:var(--red)}
-.score-info{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+.pc-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.pc-name{font-weight:700;font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-persona{font-size:10px;background:var(--blue-light);color:var(--blue);padding:1px 6px;border-radius:10px;font-weight:600;flex-shrink:0}
+.q-badge-sm{font-size:10px;background:var(--red-light);color:var(--red);padding:1px 6px;border-radius:10px;font-weight:700;flex-shrink:0}
+.pc-ip{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px}
+.bar-wrap{background:var(--bg);border-radius:3px;height:5px;margin-bottom:3px;overflow:hidden}
+.bar{height:5px;border-radius:3px;transition:.4s width}.bar.safe{background:var(--green)}.bar.warn{background:var(--amber)}.bar.hot{background:var(--red)}
+.sc-info{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
 
-/* ── Timeline ── */
-#timeline-list{overflow-y:auto;flex:1;padding:8px;display:flex;flex-direction:column;gap:6px}
-.tl-item{padding:8px 10px;border-radius:7px;border-left:3px solid var(--border);background:var(--surface2);font-size:11px}
+/* Timeline */
+#timeline-list{overflow-y:auto;flex:1;padding:8px;display:flex;flex-direction:column;gap:5px}
+.tl-item{padding:7px 9px;border-radius:7px;border-left:3px solid var(--border);background:var(--surface2);font-size:11px}
 .tl-item.threshold_crossed{border-color:var(--amber);background:var(--amber-light)}
 .tl-item.quarantine_active{border-color:var(--red);background:var(--red-light)}
 .tl-item.quarantine_cleared{border-color:var(--green);background:var(--green-light)}
-.tl-item.action_failed{border-color:var(--red);background:var(--red-light)}
-.tl-kind{font-weight:700;color:var(--text);margin-bottom:2px}
-.tl-who{color:var(--text2)}
-.tl-detail{color:var(--muted);font-size:10px;margin-top:2px}
-.tl-time{font-size:10px;color:var(--muted);margin-top:3px}
-.no-timeline{padding:20px;text-align:center;color:var(--muted);font-size:12px}
+.tl-kind{font-weight:700;margin-bottom:1px}.tl-detail{color:var(--muted);font-size:10px;margin-top:2px}
+.tl-time{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* Peers table */
+#peers-body{overflow-y:auto;flex:1}
+.peer-status{font-size:10px;padding:1px 7px;border-radius:10px;font-weight:600}
+.peer-status.online{background:var(--green-light);color:var(--green)}.peer-status.offline{background:var(--bg);color:var(--muted)}
+.peer-status.quarantined{background:var(--red-light);color:var(--red)}
+.q-btn{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:var(--font);transition:.12s}
+.q-btn.do-q{background:var(--red-light);color:var(--red)}.q-btn.do-q:hover{background:var(--red);color:#fff}
+.q-btn.do-uq{background:var(--green-light);color:var(--green)}.q-btn.do-uq:hover{background:var(--green);color:#fff}
+.q-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Confirm modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,25,50,.45);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(2px)}
+.modal{background:var(--surface);border-radius:14px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);border:1px solid var(--border)}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:10px;color:var(--text)}
+.modal p{color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:8px}
+.modal .warn{color:var(--red);font-size:12px;background:var(--red-light);padding:8px 12px;border-radius:7px;margin-bottom:16px}
+.modal .btns{display:flex;gap:10px;justify-content:flex-end}
+.btn-cancel{padding:8px 18px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;cursor:pointer;font-family:var(--font)}
+.btn-confirm{padding:8px 18px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.btn-confirm.q{background:var(--red);color:#fff}.btn-confirm.q:hover{background:#b91c1c}
+.btn-confirm.uq{background:var(--green);color:#fff}.btn-confirm.uq:hover{background:#15803d}
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
     SASE SOC Dashboard
   </div>
   <div class="conn-dot err" id="conn-dot"></div>
   <span id="conn-label">Verbinden…</span>
   <div id="replay-banner">⏳ Historische events laden…</div>
-  <div class="header-stats">
-    <div class="hstat"><div class="hstat-val" id="stat-events">0</div><div class="hstat-label">Events</div></div>
-    <div class="hstat"><div class="hstat-val" id="stat-notable">0</div><div class="hstat-label">Notables</div></div>
-    <div class="hstat"><div class="hstat-val" id="stat-quarantine" style="color:#f87171">0</div><div class="hstat-label">Quarantaine</div></div>
+  <div class="hstats">
+    <div class="hs"><div class="hs-v" id="stat-events">0</div><div class="hs-l">Events</div></div>
+    <div class="hs"><div class="hs-v" id="stat-notable">0</div><div class="hs-l">Notables</div></div>
+    <div class="hs"><div class="hs-v" id="stat-q" style="color:#f87171">0</div><div class="hs-l">Quarantaine</div></div>
   </div>
 </header>
 
-<div class="main">
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('feed',this)">📋 Live Feed</div>
+  <div class="tab" onclick="switchTab('peers',this)">👥 Peers &amp; Quarantaine</div>
+</div>
 
-  <!-- Live Event Feed -->
-  <div class="card">
+<div class="main">
+  <!-- ── TAB: Live Feed ── -->
+  <div id="tab-feed" class="tab-content active card">
     <div class="card-head">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       <span class="card-title">Live Beveiligingsfeed</span>
-      <span class="card-badge" id="feed-badge">0</span>
-      <button class="autoscroll-btn on" id="scroll-btn" onclick="toggleScroll()" style="margin-left:8px">↓ Autoscroll aan</button>
+      <span class="cbadge" id="feed-badge">0</span>
+      <button class="scroll-btn on" id="scroll-btn" onclick="toggleScroll()" style="margin-left:8px">↓ Autoscroll aan</button>
     </div>
     <div class="filters">
       <button class="pill all active" onclick="setFilter('cat','')">Alle</button>
@@ -163,196 +171,181 @@ td.score{width:48px;text-align:right}
       <button class="pill" onclick="setFilter('cat','proxy')">Proxy</button>
       <button class="pill" onclick="setFilter('cat','dns')">DNS</button>
       <button class="pill" onclick="setFilter('cat','identity')">Identity</button>
-      <div class="search-wrap">
-        <select id="f-persona" onchange="filterRows()">
+      <div class="ml-auto">
+        <select id="f-persona" class="fin" onchange="filterRows()">
           <option value="">Alle persona's</option>
           <option>Studenten</option><option>Docenten</option><option>Admins</option>
         </select>
-        <input id="f-q" placeholder="Zoeken…" oninput="filterRows()" style="width:130px">
+        <input id="f-q" class="fin" placeholder="Zoeken…" oninput="filterRows()" style="width:130px">
       </div>
     </div>
     <div id="feed-body">
       <table>
-        <colgroup>
-          <col style="width:64px"><col style="width:80px"><col style="width:165px">
-          <col style="width:76px"><col><col style="width:50px">
-        </colgroup>
-        <thead><tr>
-          <th>Tijd</th><th>Categorie</th><th>Wie</th>
-          <th>Producer</th><th>Samenvatting</th><th>Score</th>
-        </tr></thead>
+        <colgroup><col style="width:64px"><col style="width:82px"><col style="width:168px"><col style="width:74px"><col><col style="width:52px"></colgroup>
+        <thead><tr><th>Tijd</th><th>Categorie</th><th>Wie</th><th>Producer</th><th>Samenvatting</th><th>Score</th></tr></thead>
         <tbody id="feed-rows"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- Right column -->
-  <div class="right-col">
-
-    <!-- Threat Score Board -->
-    <div class="card">
-      <div class="card-head">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        <span class="card-title">Threat Score Board</span>
-        <span class="card-badge" id="score-badge" style="background:var(--red-light);color:var(--red)">0 actief</span>
-      </div>
-      <div id="score-board"><p class="no-scores">Geen actieve threat scores</p></div>
+  <!-- ── TAB: Peers ── -->
+  <div id="tab-peers" class="tab-content card">
+    <div class="card-head">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="19" cy="7" r="2"/><path d="M22 21v-2a2 2 0 0 0-2-2h-1"/></svg>
+      <span class="card-title">Alle Peers</span>
+      <span class="cbadge" id="peers-badge">0</span>
+      <button onclick="loadPeers()" style="margin-left:auto;padding:3px 10px;border-radius:6px;font-size:11px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer">↻ Vernieuwen</button>
     </div>
+    <div id="peers-body">
+      <table>
+        <colgroup><col style="width:160px"><col style="width:110px"><col style="width:120px"><col style="width:80px"><col style="width:90px"></colgroup>
+        <thead><tr><th>Naam / Identiteit</th><th>Persona</th><th>Overlay IP</th><th>Status</th><th>Actie</th></tr></thead>
+        <tbody id="peers-rows"><tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted)">Laden…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 
-    <!-- Enforcement Timeline -->
+  <!-- Right column (altijd zichtbaar) -->
+  <div class="right-col">
+    <!-- Score board -->
     <div class="card">
       <div class="card-head">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span class="card-title">Threat Score Board</span>
+        <span class="cbadge red" id="score-badge">0 actief</span>
+      </div>
+      <div id="score-board"><p class="no-data">Geen actieve threat scores</p></div>
+    </div>
+    <!-- Timeline -->
+    <div class="card">
+      <div class="card-head">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         <span class="card-title">Enforcement Tijdlijn</span>
       </div>
-      <div id="timeline-list"><p class="no-timeline">Geen enforcement events</p></div>
+      <div id="timeline-list"><p class="no-data">Geen enforcement events</p></div>
     </div>
+  </div>
+</div>
 
+<!-- Confirm modal -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">Bevestig actie</h3>
+    <p id="modal-body"></p>
+    <p id="modal-warn" class="warn" style="display:none"></p>
+    <div class="btns">
+      <button class="btn-cancel" onclick="closeModal()">Annuleren</button>
+      <button class="btn-confirm" id="modal-confirm-btn" onclick="executeAction()">Bevestigen</button>
+    </div>
   </div>
 </div>
 
 <script>
-const MAX_ROWS = 500;
-let evCount = 0, notableCount = 0, quarantineCount = 0;
-let scores = {};
-let quarantines = new Set();
-let autoScroll = true;
-let activeCatFilter = '';
-let activePersonaFilter = '';
-let activeQ = '';
+// ── State ──
+let evCount=0, notableCount=0, qCount=0;
+let autoScroll=true, activeCatFilter='';
+let pendingAction=null;  // {type:'quarantine'|'unquarantine', ip, name}
+let allPeersData=[];
+let activeQuarantines=new Set();
+
+// ── Tab switch ──
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='peers') loadPeers();
+}
 
 // ── Stats ──
-function updateStats() {
-  document.getElementById('stat-events').textContent = evCount.toLocaleString();
-  document.getElementById('stat-notable').textContent = notableCount;
-  document.getElementById('stat-quarantine').textContent = quarantineCount;
-  document.getElementById('feed-badge').textContent = evCount.toLocaleString();
+function updateStats(){
+  document.getElementById('stat-events').textContent=evCount.toLocaleString();
+  document.getElementById('stat-notable').textContent=notableCount;
+  document.getElementById('stat-q').textContent=qCount;
+  document.getElementById('feed-badge').textContent=evCount.toLocaleString();
 }
 
-// ── Filters ──
-function setFilter(type, val) {
-  if (type === 'cat') {
-    activeCatFilter = val;
-    document.querySelectorAll('.filters .pill').forEach(p => {
-      const pval = p.textContent.trim().toLowerCase().replace('alle','').trim();
-      p.classList.toggle('active',
-        val === '' ? p.classList.contains('all') : pval === val
-      );
-    });
-  }
+// ── Feed filters ──
+function setFilter(type,val){
+  activeCatFilter=val;
+  document.querySelectorAll('.filters .pill').forEach(p=>{
+    const pv=p.textContent.trim().toLowerCase().replace('alle','').trim();
+    p.classList.toggle('active', val===''?p.classList.contains('all'):pv===val);
+  });
   filterRows();
 }
-
-function filterRows() {
-  const cat = activeCatFilter;
-  const persona = document.getElementById('f-persona').value.toLowerCase();
-  const q = document.getElementById('f-q').value.toLowerCase();
-  document.querySelectorAll('#feed-rows tr').forEach(tr => {
-    const show = (!cat || tr.dataset.cat === cat)
-              && (!persona || (tr.dataset.persona||'').toLowerCase() === persona)
-              && (!q || tr.textContent.toLowerCase().includes(q));
-    tr.style.display = show ? '' : 'none';
+function filterRows(){
+  const cat=activeCatFilter;
+  const persona=document.getElementById('f-persona').value.toLowerCase();
+  const q=document.getElementById('f-q').value.toLowerCase();
+  document.querySelectorAll('#feed-rows tr').forEach(tr=>{
+    const show=(!cat||tr.dataset.cat===cat)
+             &&(!persona||(tr.dataset.persona||'').toLowerCase()===persona)
+             &&(!q||tr.textContent.toLowerCase().includes(q));
+    tr.style.display=show?'':'none';
   });
 }
-
-// ── Autoscroll ──
-function toggleScroll() {
-  autoScroll = !autoScroll;
-  const btn = document.getElementById('scroll-btn');
-  btn.textContent = autoScroll ? '↓ Autoscroll aan' : '⏸ Autoscroll uit';
-  btn.className = 'autoscroll-btn' + (autoScroll ? ' on' : '');
-}
-
-function scrollFeed() {
-  if (!autoScroll) return;
-  const fb = document.getElementById('feed-body');
-  fb.scrollTop = 0;
+function toggleScroll(){
+  autoScroll=!autoScroll;
+  const b=document.getElementById('scroll-btn');
+  b.textContent=autoScroll?'↓ Autoscroll aan':'⏸ Autoscroll uit';
+  b.className='scroll-btn'+(autoScroll?' on':'');
 }
 
 // ── Helpers ──
-function tz(ep) {
-  if (!ep) return '—';
+function tz(ep){
+  if(!ep)return'—';
   return new Date(ep*1000).toLocaleTimeString('nl-BE',
     {timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
-
-function tag(cat) {
-  const icons = {malware:'🔴',dlp:'🟠',casb:'🟣',ids:'🔵',proxy:'⬜',dns:'🔷',identity:'🌐'};
-  return `<span class="tag ${cat||'unknown'}">${cat||'?'}</span>`;
-}
-
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+function tag(cat){return`<span class="tag ${cat||'unknown'}">${cat||'?'}</span>`}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
 // ── Add event row ──
-function addRow(ev, prepend=true) {
-  const who = ev.actor_display || ev.actor_user || ev.actor_ip || '—';
-  const persona = ev.actor_persona || '';
-  const scoreHtml = ev.scored
-    ? `<span class="score-hint">+${ev.weight}</span>` : '';
-  const notable = ev.notable;
-
-  const tr = document.createElement('tr');
-  tr.dataset.cat = ev.category || '';
-  tr.dataset.persona = persona;
-  if (notable) tr.classList.add('notable-row');
-
-  tr.innerHTML = `
+function addRow(ev,prepend=true){
+  const who=ev.actor_display||ev.actor_user||ev.actor_ip||'—';
+  const persona=ev.actor_persona||'';
+  const tr=document.createElement('tr');
+  tr.dataset.cat=ev.category||'';
+  tr.dataset.persona=persona;
+  if(ev.notable)tr.classList.add('notable-row');
+  tr.innerHTML=`
     <td class="time">${tz(ev.ts_epoch)}</td>
-    <td class="cat">${tag(ev.category)}${notable?'<span class="notable-icon" title="Anonieme/org-brede share"> ⚠</span>':''}</td>
-    <td class="who" title="${esc(ev.actor_ip||'')}"><span style="font-weight:600">${esc(who)}</span>${persona?`<span style="font-size:9px;color:var(--blue);margin-left:4px">${esc(persona)}</span>`:''}</td>
+    <td class="cat">${tag(ev.category)}${ev.notable?'<span style="color:var(--amber);font-size:11px"> ⚠</span>':''}</td>
+    <td class="who" title="${esc(ev.actor_ip||'')}"><b>${esc(who)}</b>${persona?`<span style="font-size:9px;color:var(--blue);margin-left:4px">${esc(persona)}</span>`:''}</td>
     <td class="prod">${esc(ev.producer||'')}</td>
-    <td class="summary" title="${esc(ev.summary||'')}">${esc((ev.summary||'').slice(0,90))}</td>
-    <td class="score">${scoreHtml}</td>`;
-
-  const tbody = document.getElementById('feed-rows');
-  if (prepend) {
-    tbody.prepend(tr);
-    evCount++;
-    if (notable) notableCount++;
-    updateStats();
-    scrollFeed();
-  } else {
-    tbody.appendChild(tr);
-    evCount++;
-    if (notable) notableCount++;
-  }
-
-  while (tbody.rows.length > MAX_ROWS) tbody.deleteRow(tbody.rows.length - 1);
+    <td title="${esc(ev.summary||'')}">${esc((ev.summary||'').slice(0,88))}</td>
+    <td class="score-td">${ev.scored?`<span class="score-hint">+${ev.weight}</span>`:''}</td>`;
+  const tbody=document.getElementById('feed-rows');
+  if(prepend){tbody.prepend(tr);evCount++;if(ev.notable)notableCount++;updateStats();if(autoScroll)document.getElementById('feed-body').scrollTop=0;}
+  else{tbody.appendChild(tr);evCount++;if(ev.notable)notableCount++;}
+  while(tbody.rows.length>500)tbody.deleteRow(tbody.rows.length-1);
   filterRows();
 }
 
 // ── Score board ──
-function renderScores(data) {
-  quarantines = new Set(data.active_quarantines || []);
-  quarantineCount = quarantines.size;
+function renderScores(data){
+  activeQuarantines=new Set(data.active_quarantines||[]);
+  qCount=activeQuarantines.size;
   updateStats();
-  document.getElementById('score-badge').textContent =
-    (data.peers||[]).length + ' actief';
-
-  const board = document.getElementById('score-board');
-  const peers = (data.peers||[]).sort((a,b)=>b.score-a.score);
-  if (!peers.length) {
-    board.innerHTML = '<p class="no-scores">Geen actieve threat scores</p>';
-    return;
-  }
-  board.innerHTML = peers.map(s => {
-    const pct = Math.min(100, Math.round(s.score/80*100));
-    const cls = s.score>=80?'hot':s.score>=50?'warn':'safe';
-    const qBadge = (s.over_threshold||quarantines.has(s.peer_id))
-      ? '<span class="q-badge">QUARANTAINE</span>' : '';
-    const persona = s.actor_persona
-      ? `<span class="peer-persona">${esc(s.actor_persona)}</span>` : '';
-    const bdown = Object.entries(s.breakdown||{})
-      .map(([k,v])=>`${k}×${v}`).join(' · ');
-    return `<div class="peer-card">
-      <div class="peer-row">
-        <div class="peer-name">${esc(s.actor_display||s.ip)}</div>
-        ${persona}${qBadge}
+  document.getElementById('score-badge').textContent=(data.peers||[]).length+' actief';
+  const board=document.getElementById('score-board');
+  const peers=(data.peers||[]).sort((a,b)=>b.score-a.score);
+  if(!peers.length){board.innerHTML='<p class="no-data">Geen actieve threat scores</p>';return;}
+  board.innerHTML=peers.map(s=>{
+    const pct=Math.min(100,Math.round(s.score/80*100));
+    const cls=s.score>=80?'hot':s.score>=50?'warn':'safe';
+    const qb=(s.over_threshold||activeQuarantines.has(s.peer_id))?'<span class="q-badge-sm">QUARANTAINE</span>':'';
+    const bdown=Object.entries(s.breakdown||{}).map(([k,v])=>`${k}×${v}`).join(' · ');
+    return`<div class="peer-card">
+      <div class="pc-row">
+        <div class="pc-name">${esc(s.actor_display||s.ip)}</div>
+        ${s.actor_persona?`<span class="pc-persona">${esc(s.actor_persona)}</span>`:''}${qb}
       </div>
-      <div class="peer-ip">${esc(s.ip)}</div>
-      <div class="score-bar-wrap"><div class="score-bar ${cls}" style="width:${pct}%"></div></div>
-      <div class="score-info">
-        <span style="font-weight:700;color:${s.score>=80?'var(--red)':s.score>=50?'var(--amber)':'var(--green)'}">${s.score} / 80 pts</span>
+      <div class="pc-ip">${esc(s.ip)}</div>
+      <div class="bar-wrap"><div class="bar ${cls}" style="width:${pct}%"></div></div>
+      <div class="sc-info">
+        <b style="color:${s.score>=80?'var(--red)':s.score>=50?'var(--amber)':'var(--green)'}">${s.score}/80 pts</b>
         <span>${esc(bdown)}</span>
       </div>
     </div>`;
@@ -360,89 +353,135 @@ function renderScores(data) {
 }
 
 // ── Timeline ──
-function addTimeline(item) {
-  const labels = {
-    threshold_crossed: '⚠ Drempel overschreden',
-    quarantine_active: '🔴 Quarantaine actief',
-    quarantine_cleared: '✅ Quarantaine opgeheven',
-    action_failed: '❌ Actie mislukt',
-  };
-  const tl = document.getElementById('timeline-list');
-  const noEl = tl.querySelector('.no-timeline');
-  if (noEl) noEl.remove();
-
-  const div = document.createElement('div');
-  div.className = `tl-item ${item.kind}`;
-  const who = item.actor_display||item.actor_id||item.actor_ip||'?';
-  div.innerHTML = `
-    <div class="tl-kind">${labels[item.kind]||item.kind}</div>
-    <div class="tl-who">${esc(who)}</div>
+function addTimeline(item){
+  const labels={threshold_crossed:'⚠ Drempel overschreden',quarantine_active:'🔴 Quarantaine actief',quarantine_cleared:'✅ Quarantaine opgeheven',action_failed:'❌ Actie mislukt'};
+  const tl=document.getElementById('timeline-list');
+  const no=tl.querySelector('.no-data');if(no)no.remove();
+  const div=document.createElement('div');
+  div.className=`tl-item ${item.kind||''}`;
+  div.innerHTML=`<div class="tl-kind">${labels[item.kind]||item.kind}</div>
+    <div class="tl-who">${esc(item.actor_display||item.actor_id||item.actor_ip||'?')}</div>
     ${item.score!=null?`<div class="tl-detail">Score: ${item.score}</div>`:''}
     ${item.detail?`<div class="tl-detail">${esc(item.detail)}</div>`:''}
     <div class="tl-time">${new Date().toLocaleTimeString('nl-BE')}</div>`;
   tl.prepend(div);
-  while (tl.children.length > 40) tl.removeChild(tl.lastChild);
+  while(tl.children.length>40)tl.removeChild(tl.lastChild);
+}
+
+// ── Peers tabel ──
+async function loadPeers(){
+  try{
+    const r=await fetch('/api/netbird/peers');
+    const d=await r.json();
+    allPeersData=d.peers||[];
+    if(d.quarantines)activeQuarantines=new Set(d.quarantines);
+    renderPeers();
+  }catch(e){
+    document.getElementById('peers-rows').innerHTML=
+      `<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--red)">Fout: ${e.message}</td></tr>`;
+  }
+}
+
+function renderPeers(){
+  document.getElementById('peers-badge').textContent=allPeersData.length;
+  const tbody=document.getElementById('peers-rows');
+  if(!allPeersData.length){
+    tbody.innerHTML='<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted)">Geen peers gevonden — controleer NETBIRD_API_TOKEN in .env</td></tr>';
+    return;
+  }
+  tbody.innerHTML=allPeersData.map(p=>{
+    const inQ=p.quarantined||activeQuarantines.has(p.id);
+    const status=inQ?'quarantined':p.connected?'online':'offline';
+    const statusLabel=inQ?'🔴 Quarantaine':p.connected?'● Online':'○ Offline';
+    const btnHtml=inQ
+      ?`<button class="q-btn do-uq" onclick="showConfirm('unquarantine','${esc(p.ip)}','${esc(p.display||p.name)}')">🔓 Herstel</button>`
+      :`<button class="q-btn do-q" onclick="showConfirm('quarantine','${esc(p.ip)}','${esc(p.display||p.name)}')">🔒 Quarantaineer</button>`;
+    return`<tr>
+      <td style="font-weight:600" title="${esc(p.name)}">${esc(p.display||p.name||p.ip)}</td>
+      <td>${p.persona?`<span class="pc-persona">${esc(p.persona)}</span>`:'-'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${esc(p.ip||'')}</td>
+      <td><span class="peer-status ${status}">${statusLabel}</span></td>
+      <td>${p.ip?btnHtml:'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Confirm modal ──
+function showConfirm(type, ip, name){
+  pendingAction={type,ip,name};
+  const isQ=type==='quarantine';
+  document.getElementById('modal-title').textContent=isQ?'Peer in quarantaine zetten':'Quarantaine opheffen';
+  document.getElementById('modal-body').innerHTML=isQ
+    ?`Wil je <strong>${esc(name)}</strong> (${esc(ip)}) in quarantaine zetten?<br>De peer wordt verwijderd uit alle persona-groepen en deny-by-default wordt geactiveerd.`
+    :`Wil je de quarantaine van <strong>${esc(name)}</strong> (${esc(ip)}) opheffen?<br>De peer wordt hersteld in de originele persona-groepen.`;
+  const warn=document.getElementById('modal-warn');
+  if(isQ){warn.textContent='⚠ Dit is een live actie — de peer verliest onmiddellijk netwerktoegang.';warn.style.display='block';}
+  else warn.style.display='none';
+  const btn=document.getElementById('modal-confirm-btn');
+  btn.textContent=isQ?'🔒 Quarantaineer':'🔓 Herstel';
+  btn.className='btn-confirm '+(isQ?'q':'uq');
+  document.getElementById('modal').style.display='flex';
+}
+function closeModal(){document.getElementById('modal').style.display='none';pendingAction=null;}
+
+async function executeAction(){
+  if(!pendingAction)return;
+  const {type,ip,name}=pendingAction;
+  closeModal();
+  const endpoint=type==='quarantine'?`/api/quarantine/${ip}`:`/api/unquarantine/${ip}`;
+  try{
+    const r=await fetch(endpoint,{method:'POST'});
+    const d=await r.json();
+    if(d.ok){
+      alert(`✅ ${type==='quarantine'?'Quarantaine':'Herstel'} geslaagd voor ${d.peer_name||name}`);
+      setTimeout(loadPeers,1500);
+    }else{
+      alert(`❌ Mislukt: ${d.reason||'onbekende fout'}`);
+    }
+  }catch(e){alert(`❌ Verbindingsfout: ${e.message}`);}
 }
 
 // ── WebSocket ──
-let ws, retryMs = 1500;
-function connect() {
-  const proto = location.protocol==='https:'?'wss:':'ws:';
-  ws = new WebSocket(`${proto}//${location.host}/ws`);
-
-  ws.onopen = () => {
-    document.getElementById('conn-dot').className = 'conn-dot ok';
-    document.getElementById('conn-label').textContent = 'Verbonden';
-    retryMs = 1500;
+let ws,retryMs=1500;
+function connect(){
+  const proto=location.protocol==='https:'?'wss:':'ws:';
+  ws=new WebSocket(`${proto}//${location.host}/ws`);
+  ws.onopen=()=>{
+    document.getElementById('conn-dot').className='conn-dot ok';
+    document.getElementById('conn-label').textContent='Verbonden';
+    retryMs=1500;
   };
-
-  ws.onmessage = ({data}) => {
-    const msg = JSON.parse(data);
-    switch (msg.type) {
-      case 'event':
-        addRow(msg.data, true);
-        break;
-      case 'snapshot_events':
-        // Historische events — voeg toe onderaan (oudste eerst via reverse)
-        const events = (msg.data||[]).reverse();
-        document.getElementById('feed-body').scrollTop = 0;
-        events.forEach(ev => addRow(ev, false));
-        // Scroll naar top na snapshot
-        setTimeout(()=>{ document.getElementById('feed-body').scrollTop=0; },50);
-        break;
-      case 'scores':
-        renderScores(msg.data||{});
-        break;
-      case 'timeline':
-        addTimeline(msg.data);
-        break;
-      case 'replay_status':
-        document.getElementById('replay-banner').style.display =
-          msg.data.replay_done ? 'none' : 'inline-block';
-        break;
-      case 'replay_done':
-        document.getElementById('replay-banner').style.display = 'none';
-        // Fetch fresh snapshot now that replay is done
-        fetch('/api/events?limit=200')
-          .then(r=>r.json())
-          .then(d => {
-            document.getElementById('feed-rows').innerHTML = '';
-            evCount = 0; notableCount = 0; updateStats();
-            (d.events||[]).reverse().forEach(ev=>addRow(ev,false));
-            setTimeout(()=>{ document.getElementById('feed-body').scrollTop=0; },50);
-          });
-        break;
+  ws.onmessage=({data})=>{
+    const msg=JSON.parse(data);
+    if(msg.type==='event') addRow(msg.data,true);
+    else if(msg.type==='snapshot_events'){
+      (msg.data||[]).reverse().forEach(ev=>addRow(ev,false));
+      setTimeout(()=>{document.getElementById('feed-body').scrollTop=0;},50);
     }
+    else if(msg.type==='scores') renderScores(msg.data||{});
+    else if(msg.type==='timeline') addTimeline(msg.data);
+    else if(msg.type==='replay_status')
+      document.getElementById('replay-banner').style.display=msg.data.replay_done?'none':'inline-block';
+    else if(msg.type==='replay_done'){
+      document.getElementById('replay-banner').style.display='none';
+      fetch('/api/events?limit=200').then(r=>r.json()).then(d=>{
+        document.getElementById('feed-rows').innerHTML='';
+        evCount=0;notableCount=0;updateStats();
+        (d.events||[]).reverse().forEach(ev=>addRow(ev,false));
+        setTimeout(()=>{document.getElementById('feed-body').scrollTop=0;},50);
+      });
+    }
+    else if(msg.type==='quarantine_change') setTimeout(loadPeers,500);
   };
-
-  ws.onclose = ws.onerror = () => {
-    document.getElementById('conn-dot').className = 'conn-dot err';
-    document.getElementById('conn-label').textContent = `Herverbinden in ${retryMs/1000}s…`;
-    setTimeout(connect, retryMs);
-    retryMs = Math.min(retryMs*2, 30000);
+  ws.onclose=ws.onerror=()=>{
+    document.getElementById('conn-dot').className='conn-dot err';
+    document.getElementById('conn-label').textContent=`Herverbinden in ${retryMs/1000}s…`;
+    setTimeout(connect,retryMs);
+    retryMs=Math.min(retryMs*2,30000);
   };
 }
 connect();
+updateStats();
 </script>
 </body>
 </html>
