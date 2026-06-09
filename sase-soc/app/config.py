@@ -35,7 +35,12 @@ NETBIRD_POLICY_GROUPS = _list("NETBIRD_POLICY_GROUPS", "Studenten,Docenten,Admin
 CATEGORY_TO_EVENT_TYPE = {"malware": "malware", "dlp": "dlp_match"}
 
 # ── NetBird API (Fase 4b — handmatige quarantaine) ──
-NETBIRD_API_URL            = os.environ.get("NETBIRD_API_URL", "https://netbird.sandbox.local")
+# Normaliseer: strip trailing slash én een eventueel reeds aanwezige /api,
+# zodat de client altijd zelf /api/... toevoegt (voorkomt dubbele /api/api/).
+_nb_url = os.environ.get("NETBIRD_API_URL", "https://netbird.sandbox.local").rstrip("/")
+if _nb_url.endswith("/api"):
+    _nb_url = _nb_url[:-4]
+NETBIRD_API_URL            = _nb_url
 NETBIRD_API_TOKEN          = os.environ.get("NETBIRD_API_TOKEN", "")
 NETBIRD_QUARANTINE_GROUP_ID = os.environ.get("NETBIRD_QUARANTINE_GROUP_ID", "d8ecpedv0c4s73aaq6s0")
 NETBIRD_CA_CERT            = os.environ.get("NETBIRD_CA_CERT", "/certs/caddy-root.crt")
