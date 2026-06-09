@@ -172,11 +172,11 @@ td.prod{width:72px;color:var(--text2);font-size:11px}td.score-td{width:50px;text
       <button class="pill" onclick="setFilter('cat','dns')">DNS</button>
       <button class="pill" onclick="setFilter('cat','identity')">Identity</button>
       <div class="ml-auto">
-        <select id="f-persona" class="fin" onchange="filterRows()">
+        <select id="f-persona" class="fin" onchange="onPersonaChange()">
           <option value="">Alle persona's</option>
           <option>Studenten</option><option>Docenten</option><option>Admins</option>
         </select>
-        <input id="f-q" class="fin" placeholder="Zoeken…" oninput="filterRows()" style="width:130px">
+        <input id="f-q" class="fin" placeholder="Zoeken…" oninput="onSearchInput()" style="width:130px">
       </div>
     </div>
     <div id="feed-body">
@@ -265,26 +265,61 @@ function updateStats(){
   document.getElementById('feed-badge').textContent=evCount.toLocaleString();
 }
 
-// ── Feed filters ──
-function setFilter(type,val){
-  activeCatFilter=val;
-  document.querySelectorAll('.filters .pill').forEach(p=>{
-    const pv=p.textContent.trim().toLowerCase().replace('alle','').trim();
-    p.classList.toggle('active', val===''?p.classList.contains('all'):pv===val);
-  });
-  filterRows();
+// ── Feed filters — server-side voor volledige diepte ──
+let _searchTimer=null;
+async function setFilter(type,val){
+  if(type==='cat'){
+    activeCatFilter=val;
+    document.querySelectorAll('.filters .pill').forEach(p=>{
+      const pv=p.textContent.trim().toLowerCase().replace('alle','').trim();
+      p.classList.toggle('active', val===''?p.classList.contains('all'):pv===val);
+    });
+  }
+  await loadFeed();
 }
-function filterRows(){
+
+// Haalt events op uit de backend op basis van de actieve filters.
+// Geen filter -> gebalanceerde snapshot (álle categorieën).
+// Wél filter -> volledige historie van die selectie (tot 1000 nieuwste).
+async function loadFeed(){
   const cat=activeCatFilter;
-  const persona=document.getElementById('f-persona').value.toLowerCase();
-  const q=document.getElementById('f-q').value.toLowerCase();
-  document.querySelectorAll('#feed-rows tr').forEach(tr=>{
-    const show=(!cat||tr.dataset.cat===cat)
-             &&(!persona||(tr.dataset.persona||'').toLowerCase()===persona)
-             &&(!q||tr.textContent.toLowerCase().includes(q));
-    tr.style.display=show?'':'none';
-  });
+  const persona=document.getElementById('f-persona').value;
+  const q=document.getElementById('f-q').value.trim();
+  let url;
+  if(!cat && !persona && !q){
+    url='/api/events/snapshot?per_category=80';
+  }else{
+    const p=new URLSearchParams();
+    if(cat)p.set('category',cat);
+    if(persona)p.set('persona',persona);
+    if(q)p.set('q',q);
+    p.set('limit','1000');
+    url='/api/events?'+p.toString();
+  }
+  try{
+    const r=await fetch(url);
+    const d=await r.json();
+    const tbody=document.getElementById('feed-rows');
+    tbody.innerHTML='';
+    evCount=0;notableCount=0;
+    // backend levert nieuwste-eerst -> appitellen geeft nieuwste bovenaan
+    (d.events||[]).forEach(ev=>addRow(ev,false));
+    updateStats();
+    document.getElementById('feed-body').scrollTop=0;
+    // toon hoeveel er geladen is
+    document.getElementById('feed-badge').textContent=
+      (d.events||[]).length + (((d.events||[]).length>=1000)?'+':'');
+  }catch(e){
+    console.error('loadFeed fout:',e);
+  }
 }
+
+function onPersonaChange(){ loadFeed(); }
+function onSearchInput(){
+  clearTimeout(_searchTimer);
+  _searchTimer=setTimeout(loadFeed, 350);  // debounce
+}
+
 function toggleScroll(){
   autoScroll=!autoScroll;
   const b=document.getElementById('scroll-btn');
@@ -293,16 +328,35 @@ function toggleScroll(){
 }
 
 // ── Helpers ──
-function tz(ep){
-  if(!ep)return'—';
-  return new Date(ep*1000).toLocaleTimeString('nl-BE',
+function tz(ev){
+  // ev kan een epoch-getal zijn (oud gedrag) of een event-object (nieuw).
+  let ep, ingest;
+  if(typeof ev==='object' && ev!==null){ ep=ev.ts_epoch; ingest=ev.ts_ingest; }
+  else { ep=ev; }
+  const t = ep || ingest;   // val terug op ingest-tijd voor identity/IDS events
+  if(!t) return '—';
+  return new Date(t*1000).toLocaleTimeString('nl-BE',
     {timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 function tag(cat){return`<span class="tag ${cat||'unknown'}">${cat||'?'}</span>`}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
 // ── Add event row ──
+function _matchesFilter(ev){
+  if(activeCatFilter && (ev.category||'')!==activeCatFilter) return false;
+  const persona=document.getElementById('f-persona').value;
+  if(persona && (ev.actor_persona||'')!==persona) return false;
+  const q=document.getElementById('f-q').value.trim().toLowerCase();
+  if(q){
+    const hay=`${ev.summary||''} ${ev.actor_display||''} ${ev.actor_user||''} ${ev.actor_ip||''}`.toLowerCase();
+    if(!hay.includes(q)) return false;
+  }
+  return true;
+}
+
 function addRow(ev,prepend=true){
+  // Live events die niet bij de actieve filter passen niet tonen (schone view).
+  if(prepend && !_matchesFilter(ev)) return;
   const who=ev.actor_display||ev.actor_user||ev.actor_ip||'—';
   const persona=ev.actor_persona||'';
   const tr=document.createElement('tr');
@@ -310,7 +364,7 @@ function addRow(ev,prepend=true){
   tr.dataset.persona=persona;
   if(ev.notable)tr.classList.add('notable-row');
   tr.innerHTML=`
-    <td class="time">${tz(ev.ts_epoch)}</td>
+    <td class="time">${tz(ev)}</td>
     <td class="cat">${tag(ev.category)}${ev.notable?'<span style="color:var(--amber);font-size:11px"> ⚠</span>':''}</td>
     <td class="who" title="${esc(ev.actor_ip||'')}"><b>${esc(who)}</b>${persona?`<span style="font-size:9px;color:var(--blue);margin-left:4px">${esc(persona)}</span>`:''}</td>
     <td class="prod">${esc(ev.producer||'')}</td>
@@ -319,8 +373,7 @@ function addRow(ev,prepend=true){
   const tbody=document.getElementById('feed-rows');
   if(prepend){tbody.prepend(tr);evCount++;if(ev.notable)notableCount++;updateStats();if(autoScroll)document.getElementById('feed-body').scrollTop=0;}
   else{tbody.appendChild(tr);evCount++;if(ev.notable)notableCount++;}
-  while(tbody.rows.length>500)tbody.deleteRow(tbody.rows.length-1);
-  filterRows();
+  while(tbody.rows.length>1500)tbody.deleteRow(tbody.rows.length-1);
 }
 
 // ── Score board ──
@@ -455,7 +508,13 @@ function connect(){
     const msg=JSON.parse(data);
     if(msg.type==='event') addRow(msg.data,true);
     else if(msg.type==='snapshot_events'){
-      (msg.data||[]).reverse().forEach(ev=>addRow(ev,false));
+      // Alleen de initiële/ongefilterde view vullen; een actieve filter niet overschrijven
+      if(activeCatFilter||document.getElementById('f-persona').value||document.getElementById('f-q').value.trim()) return;
+      const tbody=document.getElementById('feed-rows');
+      tbody.innerHTML='';evCount=0;notableCount=0;
+      (msg.data||[]).forEach(ev=>addRow(ev,false));  // backend = nieuwste-eerst
+      updateStats();
+      document.getElementById('feed-badge').textContent=(msg.data||[]).length;
       setTimeout(()=>{document.getElementById('feed-body').scrollTop=0;},50);
     }
     else if(msg.type==='scores') renderScores(msg.data||{});
@@ -464,12 +523,8 @@ function connect(){
       document.getElementById('replay-banner').style.display=msg.data.replay_done?'none':'inline-block';
     else if(msg.type==='replay_done'){
       document.getElementById('replay-banner').style.display='none';
-      fetch('/api/events?limit=200').then(r=>r.json()).then(d=>{
-        document.getElementById('feed-rows').innerHTML='';
-        evCount=0;notableCount=0;updateStats();
-        (d.events||[]).reverse().forEach(ev=>addRow(ev,false));
-        setTimeout(()=>{document.getElementById('feed-body').scrollTop=0;},50);
-      });
+      // Herlaad de feed volgens de actieve filter (gebalanceerd als geen filter)
+      loadFeed();
     }
     else if(msg.type==='quarantine_change') setTimeout(loadPeers,500);
   };
