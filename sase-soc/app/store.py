@@ -130,6 +130,26 @@ class Store:
         rows = await cur.fetchall()
         return [dict(r) for r in rows]
 
+    async def query_events_balanced(self, per_category: int = 60,
+                                     total_cap: int = 500) -> list[dict]:
+        """Laatste N events van ELKE categorie, samengevoegd en gesorteerd op tijd.
+        Voorkomt dat hoogfrequente categorieen (proxy) de zeldzame verdringen."""
+        cur = await self._db.execute("SELECT DISTINCT category FROM events")
+        cats = [r["category"] for r in await cur.fetchall()]
+        out: list[dict] = []
+        for cat in cats:
+            cur = await self._db.execute(
+                "SELECT * FROM events WHERE category = ? ORDER BY id DESC LIMIT ?",
+                (cat, per_category),
+            )
+            out.extend([dict(r) for r in await cur.fetchall()])
+        # nieuwste eerst op BRON-tijd (ts_epoch); val terug op ingest-tijd
+        # voor events zonder bron-timestamp (identity/ids). Tijdens replay
+        # hebben alle rijen ~dezelfde ts_ingest, dus ts_epoch is leidend.
+        out.sort(key=lambda r: (r.get("ts_epoch") or r.get("ts_ingest") or 0),
+                 reverse=True)
+        return out[:total_cap]
+
     async def query_timeline(self, *, since: Optional[float] = None,
                              kind: Optional[str] = None, limit: int = 200) -> list[dict]:
         sql = "SELECT * FROM timeline WHERE 1=1"
