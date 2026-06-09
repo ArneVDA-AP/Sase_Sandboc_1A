@@ -56,16 +56,17 @@ async def _on_event(subject: str, raw: bytes, is_replay: bool = False) -> None:
 
 
 async def _on_replay_done() -> None:
-    """Zodra replay klaar is: stuur snapshot van de 200 meest recente events."""
-    log.info("Replay compleet — snapshot pushen naar verbonden browsers")
-    rows = await store.query_events(limit=200)
+    """Zodra replay klaar is: stuur een GEBALANCEERDE snapshot (laatste N per
+    categorie) zodat álle categorieën zichtbaar zijn, niet alleen proxy."""
+    log.info("Replay compleet — gebalanceerde snapshot pushen naar browsers")
+    rows = await store.query_events_balanced()
     await ws_mgr.broadcast("snapshot_events", [_ev_wire(r) for r in rows])
     await ws_mgr.broadcast("replay_done", {"count": len(rows)})
 
 
 def _ev_wire(ev: dict) -> dict:
     return {k: ev.get(k) for k in (
-        "ts_epoch", "subject", "category", "producer",
+        "ts_epoch", "ts_ingest", "subject", "category", "producer",
         "actor_type", "actor_ip", "actor_user", "actor_persona", "actor_display",
         "severity", "summary", "scored", "weight", "notable",
     )}
@@ -198,6 +199,14 @@ async def api_events(
     return {"events": rows, "count": len(rows)}
 
 
+@app.get("/api/events/snapshot")
+async def api_events_snapshot(per_category: int = Query(60, ge=10, le=300)):
+    """Gebalanceerde snapshot: laatste N events per categorie, nieuwste eerst.
+    Garandeert dat élke categorie zichtbaar is ongeacht volume-verschillen."""
+    rows = await store.query_events_balanced(per_category=per_category)
+    return {"events": rows, "count": len(rows)}
+
+
 @app.get("/api/scores")
 async def api_scores():
     peer_scores = await scores.current_scores()
@@ -232,8 +241,8 @@ async def api_peers():
 async def websocket(ws: WebSocket):
     await ws_mgr.connect(ws)
     try:
-        # Snapshot: stuur recente events + huidige scores
-        rows = await store.query_events(limit=200)
+        # Gebalanceerde snapshot: laatste N per categorie (álle categorieën zichtbaar)
+        rows = await store.query_events_balanced()
         await ws.send_json({"type": "snapshot_events",
                             "data": [_ev_wire(r) for r in rows]})
         ps = await scores.current_scores()
@@ -266,6 +275,18 @@ async def api_netbird_peers():
         # overlay IP zonder prefix
         ip = str(p.get("ip", "")).split("/")[0]
         rec = await identity.resolve(ip) if ip else {}
+
+        # Identiteit alleen gebruiken als de bridge écht resolvde (user != None).
+        # Anders (offline peer) valt de bridge terug op het IP -> dan liever de
+        # NetBird-peernaam tonen. Persona uit NetBird-groepen als fallback.
+        if rec.get("user"):
+            display = rec.get("display")
+            persona = rec.get("persona")
+        else:
+            display = p.get("name") or ip
+            persona = next((g for g in group_names
+                            if g in config.NETBIRD_POLICY_GROUPS), None)
+
         result.append({
             "id":           p.get("id"),
             "name":         p.get("name"),
@@ -274,8 +295,8 @@ async def api_netbird_peers():
             "connected":    p.get("connected"),
             "groups":       group_names,
             "quarantined":  in_quarantine,
-            "display":      rec.get("display") or p.get("name") or ip,
-            "persona":      rec.get("persona"),
+            "display":      display,
+            "persona":      persona,
         })
     result.sort(key=lambda x: (not x["connected"], x["display"] or ""))
     return {"peers": result, "quarantines": list(quarantines)}
